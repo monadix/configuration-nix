@@ -22,17 +22,6 @@
         efiSupport = true;
         efiInstallAsRemovable = true;
         extraGrubInstallArgs = [ "--disable-shim-lock" ];
-        extraEntries = ''
-          menuentry "Windus" {
-            insmod part_gpt
-            insmod chain
-            chainloader /EFI/Microsoft/Boot/bootmgfw.efi
-          }
-          menuentry "Arch" {
-            linux /vmlinuz-linux root=/dev/nvme0n1p3 rw
-            initrd /intel-ucode.img /initramfs-linux.img
-          }
-        '';
       };
       efi = {
         canTouchEfiVariables = false;
@@ -94,7 +83,6 @@
       }
     ];
 
-    videoDrivers = ["nvidia"];
     xkb = {
       layout = "us,ru";
       variant = ",";
