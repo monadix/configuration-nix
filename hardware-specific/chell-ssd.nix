@@ -12,7 +12,7 @@
       "kvm-intel" 
       "v4l2loopback"
     ];
-    extraModulePackages = [
+    extraModulePackages = with config.boot.kernelPackages; [
       v4l2loopback
     ];
     
