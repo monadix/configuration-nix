@@ -12,6 +12,11 @@
         system = "x86_64-linux";
         modules = [ ./configuration.nix ./hardware-specific/chell-nixos.nix ];
       };
+      
+      chell-flake = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        modules = [ ./configuration.nix ./hardware-specific/chell-ssd.nix ];
+      };
     };
   };
 }
