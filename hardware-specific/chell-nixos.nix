@@ -75,6 +75,10 @@
   networking.useDHCP = lib.mkDefault true;
   # networking.interfaces.enp0s20u4u1.useDHCP = lib.mkDefault true;
   # networking.interfaces.enp5s0.useDHCP = lib.mkDefault true;
+  
+  networking.hostName = "chell-nixos";
+
+  services.xserver.videoDrivers = [ "nvidia" ];
 
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
   hardware = {

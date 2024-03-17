@@ -1,6 +1,5 @@
 { config, pkgs, ... }: { 
   networking = {
-    hostName = "chell-nixos";
     networkmanager.enable = true;
     dhcpcd = {
       wait = "background";
@@ -35,7 +34,6 @@
       }
     ];
 
-    videoDrivers = ["nvidia"];
     xkb = {
       layout = "us,ru";
       variant = ",";
