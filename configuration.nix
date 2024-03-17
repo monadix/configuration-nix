@@ -142,7 +142,6 @@
     description = "chell";
     extraGroups = [ "networkmanager" "wheel" "docker" "plugdev" ];
     hashedPassword = "$y$j9T$dvuZmpawy1e63KSJpnLSE1$IVAAzcmcisaRsfNRMDikox36MOyH.e/DVOcJZG0cvAB";
-    initialHashedPassword = "$y$j9T$dvuZmpawy1e63KSJpnLSE1$IVAAzcmcisaRsfNRMDikox36MOyH.e/DVOcJZG0cvAB";   
 
     packages = with pkgs; [
     ];
