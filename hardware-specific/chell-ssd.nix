@@ -65,6 +65,4 @@
       ];
     };
   };
-  
-  virtualisation.docker.storageDriver = "ext4";
 }
