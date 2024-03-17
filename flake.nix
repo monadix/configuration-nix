@@ -7,10 +7,11 @@
   
   outputs = { self, nixpkgs }: {
 
-    nixosConfigurations.chell-nixos = nixpkgs.lib.nixosSystem {
-      system = "x86_64-linux";
-      modules = [ ./configuration.nix ];
+    nixosConfigurations = {
+      chell-nixos = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        modules = [ ./configuration.nix ./hardware-specific/chell-nixos.nix ];
+      };
     };
-
   };
 }
