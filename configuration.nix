@@ -124,14 +124,9 @@
   virtualisation.docker.enable = true;
 
   programs = {
-    neovim = 
-    let 
-      toLua = str: "lua << EOF\n${str}\nEOF\n";
-      toLuaFile = file: toLua (builtins.readFile file);
-    in {
+    neovim = { 
       enable = true;
       defaultEditor = true;
-      configure.customRC = toLuaFile ./nvim/options.lua;
 
       viAlias = true;
       vimAlias = true;
