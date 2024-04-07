@@ -55,19 +55,6 @@
 
   services.xserver.libinput.enable = true;
 
-  services.mysql = {
-    enable = true;
-    package = pkgs.mysql80;
-    settings = {
-      mysqld = {
-        local-infile = true;
-      };
-      mysql = {
-        local-infile = true;
-      };
-    };
-  };
-
   environment.interactiveShellInit = ''
     alias cl=clear
     export PATH="$PATH:$HOME/.pub-cache/bin"
