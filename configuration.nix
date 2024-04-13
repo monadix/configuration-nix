@@ -25,7 +25,6 @@
 
   services.xserver = {
     enable = true;
-    displayManager.defaultSession = "xsession";   
     displayManager.session = [
       {
         manage = "desktop";
@@ -38,6 +37,10 @@
       layout = "us,ru";
       variant = ",";
     };
+  };
+
+  services.displayManager = {
+    defaultSession = "xsession";   
   };
 
   services.printing.enable = true;
