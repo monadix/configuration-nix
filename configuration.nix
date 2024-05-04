@@ -56,7 +56,7 @@
     jack.enable = true;
   };
 
-  services.xserver.libinput.enable = true;
+  services.libinput.enable = true;
 
   environment.interactiveShellInit = ''
     alias cl=clear
