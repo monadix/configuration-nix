@@ -23,10 +23,14 @@
       grub = {
         enable = true;
         device = "nodev";
+
         useOSProber = false;
         efiSupport = true;
         efiInstallAsRemovable = true;
         extraGrubInstallArgs = [ "--disable-shim-lock" ];
+
+        configurationLimit = 20;
+
         extraEntries = ''
           menuentry "Windus" {
             insmod part_gpt

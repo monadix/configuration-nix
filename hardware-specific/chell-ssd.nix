@@ -20,8 +20,12 @@
       grub = {
         enable = true;
         device = "nodev";
+
         useOSProber = false;
         efiSupport = true;
+
+        configurationLimit = 20;
+
         efiInstallAsRemovable = true;
         extraGrubInstallArgs = [ "--disable-shim-lock" ];
       };
