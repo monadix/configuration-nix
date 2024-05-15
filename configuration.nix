@@ -87,6 +87,7 @@
   };
 
   environment.systemPackages = with pkgs; [
+    acpi
     android-tools
     cabal-install
     dart
@@ -99,13 +100,16 @@
     go
     haskell-language-server
     home-manager
+    inxi
     jdk
     neofetch
     openvpn
     parted
     pciutils
     rustup
+    screentest
     stack
+    upower
     usbutils
     unzip
     wget
