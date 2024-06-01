@@ -61,11 +61,24 @@
     cpu.intel.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
     opengl = {
       enable = true;
+
+      driSupport = true;
+      driSupport32Bit = true;
+
       extraPackages = with pkgs; [
+        amdvlk
         intel-media-driver
+	      libvdpau-va-gl
 	      vaapiIntel
 	      vaapiVdpau
+      ];
+
+      extraPackages32 = with pkgs.driversi686Linux; [
+        amdvlk
+        intel-media-driver
 	      libvdpau-va-gl
+	      vaapiIntel
+	      vaapiVdpau
       ];
     };
   };

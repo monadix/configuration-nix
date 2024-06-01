@@ -25,13 +25,15 @@
 
   services.xserver = {
     enable = true;
-    displayManager.session = [
-      {
+    displayManager = {
+      session = [{
         manage = "desktop";
-	      name = "xsession";
+        name = "xsession";
         start = "exec ~/.xsession";
-      }
-    ];
+      }];
+
+      lightdm.enable = true;
+    };
 
     xkb = {
       layout = "us,ru";
