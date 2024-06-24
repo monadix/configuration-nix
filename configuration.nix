@@ -93,6 +93,7 @@
     android-tools
     cabal-install
     dart
+    dmidecode
     file
     firebase-tools
     flutter
@@ -104,6 +105,7 @@
     home-manager
     inxi
     jdk
+    lshw
     neofetch
     openvpn
     parted
