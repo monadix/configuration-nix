@@ -67,16 +67,12 @@
         amdvlk
         intel-media-driver
 	      libvdpau-va-gl
-	      vaapiIntel
-	      vaapiVdpau
       ];
 
       extraPackages32 = with pkgs.driversi686Linux; [
         amdvlk
         intel-media-driver
 	      libvdpau-va-gl
-	      vaapiIntel
-	      vaapiVdpau
       ];
     };
   };

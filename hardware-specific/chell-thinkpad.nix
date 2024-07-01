@@ -66,13 +66,11 @@
 
       extraPackages = with pkgs; [
         amdvlk
-	      vaapiVdpau
 	      libvdpau-va-gl
       ];
 
       extraPackages32 = with pkgs.driversi686Linux; [
         amdvlk
-	      vaapiVdpau
 	      libvdpau-va-gl
       ];
     };
