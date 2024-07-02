@@ -81,7 +81,6 @@
 
   nixpkgs.config = {
     allowUnfree = true;
-    allowBroken = true;
     permittedInsecurePackages = [
       "electron-24.8.6"
       "electron-19.1.9"
