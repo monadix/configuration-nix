@@ -122,6 +122,8 @@
   virtualisation.docker.enable = true;
 
   programs = {
+    dconf.enable = true;
+
     neovim = { 
       enable = true;
       defaultEditor = true;
