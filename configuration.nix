@@ -32,7 +32,10 @@
         start = "exec ~/.xsession";
       }];
 
-      lightdm.enable = true;
+      lightdm = {
+        enable = true;
+        background = ./wallpapers/nixos-nord-dark.png;
+      };
     };
 
     xkb = {
