@@ -23,6 +23,15 @@
     LC_TIME = "ru_RU.UTF-8";
   };
 
+  boot.supportedFilesystems = {
+    btrfs = true;
+    exfat = true;
+    ext = true;
+    ntfs = true;
+    vfat = true;
+    xfs = true;
+  };
+
   services.xserver = {
     enable = true;
     displayManager = {
