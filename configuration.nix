@@ -127,7 +127,6 @@
     usbutils
     unzip
     wget
-    zoom-us
   ];
 
   virtualisation.docker.enable = true;
