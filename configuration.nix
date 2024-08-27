@@ -103,7 +103,9 @@
     android-tools
     cabal-install
     dart
+    dive
     dmidecode
+    docker-compose
     file
     firebase-tools
     flutter
@@ -120,6 +122,7 @@
     openvpn
     parted
     pciutils
+    podman-tui
     rustup
     screentest
     stack
@@ -129,7 +132,15 @@
     wget
   ];
 
-  virtualisation.docker.enable = true;
+  virtualisation.containers.enable = true;
+
+  virtualisation.podman = {
+    enable = true;
+
+    dockerCompat = true;
+    
+    defaultNetwork.settings.dns_enabled = true;
+  };
 
   programs = {
     dconf.enable = true;
