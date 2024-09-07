@@ -118,7 +118,7 @@
     inxi
     jdk
     lshw
-    neofetch
+    fastfetch
     openvpn
     parted
     pciutils
