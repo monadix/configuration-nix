@@ -75,4 +75,6 @@
       ];
     };
   };
+
+  services.tlp.enable = true;
 }

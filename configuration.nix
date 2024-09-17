@@ -59,8 +59,6 @@
 
   services.printing.enable = true;
 
-  services.tlp.enable = true;
-
   hardware.pulseaudio.enable = false;
   security.rtkit.enable = true;
   services.pipewire = {
