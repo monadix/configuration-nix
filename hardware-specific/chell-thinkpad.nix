@@ -76,5 +76,10 @@
     };
   };
 
-  services.tlp.enable = true;
+  services.tlp = {
+    enable = true;
+    settings = {
+      RUNTIME_PM_DRIVER_DENYLIST = "mei_me nouveau radeon xhci_hcd";
+    };
+  };
 }
