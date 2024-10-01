@@ -76,7 +76,11 @@
     export PATH="$PATH:$HOME/.pub-cache/bin"
   '';
 
-  nix.settings.experimental-features = ["nix-command" "flakes"];
+  nix = {
+    package = pkgs.nixVersions.latest;
+
+    settings.experimental-features = ["nix-command" "flakes"];
+  };
 
   users.users.chell = {
     isNormalUser = true;
