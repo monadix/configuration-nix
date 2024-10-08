@@ -6,6 +6,11 @@
       extraConfig = "noarp";
     };
   };
+  
+  boot.kernel.sysctl = {
+    "net.ipv4.ip_default_ttl" = 65;
+    "net.ipv6.conf.all.hop_limit" = 65;
+  };
 
   time.timeZone = "Europe/Moscow";
 
