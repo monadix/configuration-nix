@@ -89,4 +89,9 @@
       RUNTIME_PM_DRIVER_DENYLIST = "mei_me nouveau radeon xhci_hcd";
     };
   };
+
+  zramSwap = {
+    enable = true;
+    algorithm = "zstd";
+  };
 }
