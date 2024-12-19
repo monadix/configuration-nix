@@ -12,6 +12,10 @@
     "net.ipv6.conf.all.hop_limit" = 65;
   };
 
+  boot.loader.grub = {
+    splashImage = ./wallpapers/nixos-nord-dark.png;
+  };
+
   time.timeZone = "Europe/Moscow";
 
   i18n.defaultLocale = "en_US.UTF-8";
@@ -49,6 +53,17 @@
       lightdm = {
         enable = true;
         background = ./wallpapers/nixos-nord-dark.png;
+        greeters.gtk = {
+          enable = true;
+          theme = {
+            name = "Nordic";
+            package = pkgs.nordic;
+          };
+          iconTheme = {
+            name = "Nordzy";
+            package = pkgs.nordzy-icon-theme;
+          };
+        };
       };
     };
 
