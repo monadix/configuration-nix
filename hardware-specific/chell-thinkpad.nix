@@ -81,6 +81,15 @@
     };
   };
 
+  services.xserver.config = ''
+    Section "InputClass"
+      Identifier      "Thinkpad trackpoint setup"
+      MatchProduct    "ETPS/2 Elantech TrackPoint"
+      MatchDevicePath "/dev/input/event*"
+      Option          "AccelSpeed" "1"
+    EndSection
+  '';
+
   services.blueman.enable = true;
 
   services.tlp = {
