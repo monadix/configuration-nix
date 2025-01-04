@@ -138,7 +138,6 @@
     dmidecode
     docker-compose
     file
-    firebase-tools
     flutter
     gcc
     ghc
