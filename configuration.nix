@@ -156,6 +156,7 @@
     rustup
     screentest
     stack
+    steam-run
     upower
     usbutils
     unzip
