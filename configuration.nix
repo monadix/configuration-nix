@@ -189,6 +189,22 @@
     };
   };
 
+  xdg.portal = {
+    enable = true;
+    extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
+    config = {
+      common.default = "*";
+    };
+  };
+
+  services.flatpak = {
+    enable = true;
+
+    packages = [
+      { appId = "app.zen_browser.zen"; origin = "flathub"; }
+    ];
+  };
+
   services.openssh = {
     enable = true;
   };
