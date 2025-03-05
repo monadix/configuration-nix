@@ -211,6 +211,7 @@
 
   services.tor = {
     enable = true;
+    openFirewall = true;
     client.enable = true;
     torsocks.enable = true;
 
@@ -218,10 +219,8 @@
       UseBridges = true;
       ClientTransportPlugin = "obfs4 exec ${pkgs.obfs4}/bin/lyrebird";
       Bridge = [
-        "obfs4 73.63.17.93:10501 F6753A563C0FB3552410955B4902DBB4F0986C85 cert=jiagz9T/m7z+ldM39UUNSMpVl3GBpVTm7MaKaamTSRE78qolIFlEleyqvhc+ZFugDO6TWw iat-mode=0"
-        "obfs4 54.38.138.176:18032 757DF27827A20AE6085CFC9F338A6AC09192B8D0 cert=VxE+rhy4rsebRFPJWpfnE9Sio1H6fjrdWtPKwefK2fcR0XYlvJXH6K/jluzR0s7oxob/bg iat-mode=0"
-        "obfs4 15.235.47.71:58131 7AAC6E36700ECB0B9869BC70B7397D3A158EDE3E cert=QkNiC9DVrXqcyn1Y6njSwiNsOGGBb1anPVpE6Mjdph9jxr0Wi0fk9LArNCdvO4kCIIRdIA iat-mode=0"
-        "obfs4 91.134.80.167:11198 9F6651B7CA83B25D5C7BDC9E420210376199BCBE cert=ATSAxm7VszEv+BR+WoA7qQR0HhUb5wa8MgCr2lD7ZOBzx5DkjBrwHwrV4kZ3Y/APBUGbXQ iat-mode=0"
+        "obfs4 141.94.213.29:34975 3CCF6211A6115BA32224E939C179AC2F8269E186 cert=xFW3DRM458PUIuWgi74qRg8IG7JElyFJIYgy9+V+flBQuvfKKonuPJb373QooLLR+eIqMg iat-mode=0"
+        "obfs4 57.128.35.251:17275 3411026D454DF9F94BB263BCED2CFBECEBBAAF4C cert=nDA6sKSsjz28b1XZVZwZcx2dBbRSdYFZR5yvenhtFKQA7zYY6N2otTaa562gZViSNSW9Kg iat-mode=0"
       ];
     };
   };
