@@ -107,6 +107,11 @@
     };
   };
 
+  services.udev.extraRules = ''
+    ACTION=="add", SUBSYSTEM=="backlight", KERNEL=="amdgpu_bl1", RUN+="${pkgs.coreutils}/bin/chgrp video /sys/class/backlight/amdgpu_bl1/brightness"
+    ACTION=="add", SUBSYSTEM=="backlight", KERNEL=="amdgpu_bl1", RUN+="${pkgs.coreutils}/bin/chmod g+w /sys/class/backlight/amdgpu_bl1/brightness"
+  '';
+
   zramSwap = {
     enable = true;
     algorithm = "zstd";

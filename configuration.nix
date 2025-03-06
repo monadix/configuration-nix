@@ -112,7 +112,7 @@
   users.users.chell = {
     isNormalUser = true;
     description = "chell";
-    extraGroups = [ "networkmanager" "wheel" "docker" "plugdev" "dialout" "sys" "lp" ];
+    extraGroups = [ "networkmanager" "wheel" "docker" "plugdev" "dialout" "sys" "lp" "video" ];
     hashedPassword = "$y$j9T$dvuZmpawy1e63KSJpnLSE1$IVAAzcmcisaRsfNRMDikox36MOyH.e/DVOcJZG0cvAB";
     
     shell = pkgs.nushell;
