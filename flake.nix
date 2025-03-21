@@ -4,12 +4,15 @@
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
 
+    nixpkgs-stable.url = "github:NixOS/nixpkgs/24.11";
+
     flatpaks.url = "github:gmodena/nix-flatpak";
   };
   
-  outputs = { self, nixpkgs, flatpaks, ... }: 
+  outputs = { self, nixpkgs, nixpkgs-stable, flatpaks, ... }: 
   let
     commonModules = [ ./configuration.nix  flatpaks.nixosModules.nix-flatpak ];
+    pkgsStableFor = system: nixpkgs-stable.legacyPackages."${system}";
   in 
   {
 
@@ -24,7 +27,7 @@
         modules = [ ./hardware-specific/chell-ssd.nix ] ++ commonModules;
       };
 
-      chell-thinkpad = nixpkgs.lib.nixosSystem {
+      chell-thinkpad = nixpkgs.lib.nixosSystem rec {
         system = "x86_64-linux";
         modules = [ ./hardware-specific/chell-thinkpad.nix ] ++ commonModules;
       };
