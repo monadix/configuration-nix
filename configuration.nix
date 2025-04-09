@@ -129,14 +129,6 @@
     ];
   };
 
-  nixpkgs.overlays = [
-    (final: prev: {
-      libfprint = prev.libfprint.overrideAttrs (oldAttrs: {
-        buildInputs = oldAttrs.buildInputs ++ [ prev.nss ];
-      });
-    })
-  ];
-
   environment.systemPackages = with pkgs; [
     acpi
     android-tools
