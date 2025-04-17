@@ -7,6 +7,9 @@
     nixpkgs-stable.url = "github:NixOS/nixpkgs/24.11";
 
     flatpaks.url = "github:gmodena/nix-flatpak";
+
+    disko.url = "github:nix-community/disko";
+    disko.inputs.nixpkgs.follows = "nixpkgs";
   };
   
   outputs = { self, nixpkgs, nixpkgs-stable, flatpaks, ... }: 
@@ -24,7 +27,13 @@
       
       chell-ssd = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
-        modules = [ ./hardware-specific/chell-ssd.nix ] ++ commonModules;
+        modules = [ 
+          ./hardware-specific/chell-ssd.nix 
+          ./hardware-specific/chell-ssd-disko.nix 
+          {
+            _module.args.disks = [ "/dev/sda" ];
+          }
+        ] ++ commonModules;
       };
 
       chell-thinkpad = nixpkgs.lib.nixosSystem rec {

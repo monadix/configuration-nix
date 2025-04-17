@@ -37,15 +37,15 @@
     };
   };
 
-  fileSystems."/" =
-    { device = "/dev/disk/by-uuid/10c45464-e2dd-4a55-917c-6cc77d02ef36";
-      fsType = "ext4";
-    };
+  #fileSystems."/" =
+  #  { device = "/dev/disk/by-uuid/10c45464-e2dd-4a55-917c-6cc77d02ef36";
+  #    fsType = "ext4";
+  #  };
 
-  fileSystems."/boot" =
-    { device = "/dev/disk/by-uuid/339A-0925";
-      fsType = "vfat";
-    };
+  #fileSystems."/boot" =
+  #  { device = "/dev/disk/by-uuid/339A-0925";
+  #    fsType = "vfat";
+  #  };
 
   swapDevices = [ ];
 
