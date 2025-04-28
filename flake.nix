@@ -12,7 +12,7 @@
     disko.inputs.nixpkgs.follows = "nixpkgs";
   };
   
-  outputs = { self, nixpkgs, nixpkgs-stable, flatpaks, ... }: 
+  outputs = { self, nixpkgs, nixpkgs-stable, flatpaks, disko, ... }: 
   let
     commonModules = [ ./configuration.nix  flatpaks.nixosModules.nix-flatpak ];
     pkgsStableFor = system: nixpkgs-stable.legacyPackages."${system}";
@@ -28,6 +28,7 @@
       chell-ssd = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         modules = [ 
+          disko.nixosModules.disko
           ./hardware-specific/chell-ssd.nix 
           ./hardware-specific/chell-ssd-disko.nix 
           {
