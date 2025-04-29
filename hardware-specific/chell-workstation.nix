@@ -54,7 +54,7 @@
   # networking.interfaces.enp0s20f0u6.useDHCP = lib.mkDefault true;
   # networking.interfaces.wlo1.useDHCP = lib.mkDefault true;
   
-  networking.hostName = "chell-ssd";
+  networking.hostName = "MDR024";
 
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
   hardware = {
