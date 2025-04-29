@@ -31,6 +31,11 @@
         system = "x86_64-linux";
         modules = [ ./hardware-specific/chell-thinkpad.nix ] ++ commonModules;
       };
+
+      chell-workstation = nixpkgs.lib.nixosSystem rec {
+        system = "x86_64-linux";
+        modules = [ ./hardware-specific/chell-workstation.nix ] ++ commonModules;
+      };
     };
   };
 }
