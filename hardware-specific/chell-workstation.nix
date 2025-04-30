@@ -5,8 +5,19 @@
     ];
 
   boot = {
-    initrd.availableKernelModules = [ "xhci_pci" "ahci" "usb_storage" "usbhid" "sd_mod" "rtsx_pci_sdmmc" ];
-    initrd.kernelModules = [ ];
+    initrd = {
+      availableKernelModules = [ 
+        "xhci_pci"
+        "ahci"
+        "usb_storage"
+        "usbhid"
+        "sd_mod"
+        "rtsx_pci_sdmmc"
+      ];
+      kernelModules = [ ];
+
+      luks.devices."cryptroot".device = "/dev/disk/by-uuid/bd2a93e8-785b-4665-96a9-fe8d298c18fa";
+    };
 
     kernelModules = [ 
       "kvm-intel" 
@@ -38,7 +49,7 @@
   };
 
   fileSystems."/" =
-    { device = "/dev/disk/by-uuid/d1c5ef82-3389-46fb-82ec-c86a32821e9d";
+    { device = "/dev/mapper/cryptroot";
       fsType = "ext4";
     };
 
