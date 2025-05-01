@@ -205,6 +205,22 @@
     ];
   };
 
+  services.zapret = {
+    enable = true;
+
+    whitelist = [
+      "youtube.com"
+      "googlevideo.com"
+      "ytimg.com"
+      "youtu.be"
+    ];
+
+    params = [
+      "--dpi-desync=multidisorder"
+      "--dpi-desync-split-pos=2"
+    ];
+  };
+
   services.openssh = {
     enable = true;
   };
