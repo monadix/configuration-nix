@@ -80,10 +80,7 @@
       ];
     };
 
-    bluetooth = {
-      enable = true;
-      powerOnBoot = true;
-    };
+    bluetooth.enable = true;
   };
 
   services.xserver.config = ''
