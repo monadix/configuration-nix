@@ -209,10 +209,52 @@
     enable = true;
 
     whitelist = [
+      ## YouTube
       "youtube.com"
       "googlevideo.com"
       "ytimg.com"
       "youtu.be"
+
+      ## Discord
+      # Core Discord Domains
+      "discord.com"
+      "discordapp.com"
+      "discord.gg"
+      "dis.gd"
+      "discord.co"
+      "discordapp.net"
+      # CDN Domains
+      "cdn.discordapp.com"
+      "media.discordapp.net"
+      # Major CDN Providers
+      "cloudflare.com"
+      "amazonaws.com"
+      "cloudfront.net"
+      # Voice and Media
+      "discord.media"
+      # API Related (Likely)
+      "*.discord.com"
+      "*.discordapp.com"
+      # Other Official Domains
+      "discord.new"
+      "discord.gift"
+      "discord.gifts"
+      "discordstatus.com"
+      "discord.design"
+      "discord.dev"
+      "discord.store"
+      "discord.tools"
+      "discordpartygames.com"
+      "discord-activities.com"
+      "discordactivities.com"
+      "discordsays.com"
+      "discordmerch.com"
+      "discordsez.com"
+      "*.discord.fr"
+      # Other CDN Providers (Consider)
+      "*.akamai.com"
+      "*.fastly.com"
+      "*.googleusercontent.com"
     ];
 
     params = [
@@ -251,7 +293,7 @@
 
   # This value determines the NixOS release from which the default
   # settings for stateful data, like file locations and database versions
-  # on your system were taken. It‘s perfectly fine and recommended to leave
+  # on your system were taken. It's perfectly fine and recommended to leave
   # this value at the release version of the first install of this system.
   # Before changing this value read the documentation for this option
   # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
