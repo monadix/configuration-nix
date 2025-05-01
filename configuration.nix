@@ -80,6 +80,8 @@
   services.printing.enable = true;
 
   security.rtkit.enable = true;
+  security.pam.services.xscreensaver.enable = true;
+
   services.pipewire = {
     enable = true;
     alsa.enable = true;
