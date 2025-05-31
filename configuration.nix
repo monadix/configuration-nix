@@ -287,9 +287,10 @@
 
   networking.firewall = {
     enable = true;
-    allowedTCPPorts = [ 80 443 ];
+    allowedTCPPorts = [ 80 443 25565 ];
     allowedUDPPortRanges = [
       { from = 28800; to = 28802; }
+      { from = 25565; to = 25566; }
     ];
   };
 
