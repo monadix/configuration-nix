@@ -84,7 +84,10 @@
 	      libvdpau-va-gl
       ];
     };
+    bluetooth.enable = true;
   };
+
+  services.blueman.enable = true;
 
   zramSwap = {
     enable = true;
