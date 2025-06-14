@@ -211,6 +211,9 @@
     enable = true;
 
     whitelist = [
+      "rutracker.org"
+      "rutracker.cc"
+
       ## YouTube
       "youtube.com"
       "googlevideo.com"
@@ -261,7 +264,6 @@
 
     params = [
       "--dpi-desync=multidisorder"
-      "--dpi-desync-split-pos=2"
     ];
   };
 
