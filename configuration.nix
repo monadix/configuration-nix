@@ -5,6 +5,29 @@
       wait = "background";
       extraConfig = "noarp";
     };
+
+    wg-quick.interfaces = {
+      wg0 = {
+        address = [ "192.168.78.25/32" ];
+        listenPort = 51820;
+
+        privateKeyFile = "~/private.key";
+
+        dns = [ "172.16.0.101" ];
+
+        peers = [
+          {
+            publicKey = "4E0z2Zo4TvhtEPnC7gWcFlG6vpPR/aRJEKS8uFg2nFg=";
+
+            allowedIPs = [ "172.16.16.0/20" "172.16.0.0/22" ];
+
+            endpoint = "213.138.72.10:13232";
+
+            persistentKeepalive = 5;
+          }
+        ];
+      };
+    };
   };
   
   boot.kernel.sysctl = {
@@ -290,6 +313,7 @@
   networking.firewall = {
     enable = true;
     allowedTCPPorts = [ 80 443 25565 ];
+    allowedUDPPorts = [ 51820 ];
     allowedUDPPortRanges = [
       { from = 28800; to = 28802; }
       { from = 25565; to = 25566; }
