@@ -8,6 +8,8 @@
 
     wg-quick.interfaces = {
       wg0 = {
+        autostart = false;
+
         address = [ "192.168.78.25/32" ];
         listenPort = 51820;
 
