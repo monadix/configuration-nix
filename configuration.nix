@@ -5,6 +5,29 @@
       wait = "background";
       extraConfig = "noarp";
     };
+
+    wg-quick.interfaces = {
+      wg0 = {
+        address = [ "192.168.78.25/32" ];
+        listenPort = 51820;
+
+        privateKeyFile = "~/private.key";
+
+        dns = [ "172.16.0.101" ];
+
+        peers = [
+          {
+            publicKey = "4E0z2Zo4TvhtEPnC7gWcFlG6vpPR/aRJEKS8uFg2nFg=";
+
+            allowedIPs = [ "172.16.16.0/20" "172.16.0.0/22" ];
+
+            endpoint = "213.138.72.10:13232";
+
+            persistentKeepalive = 5;
+          }
+        ];
+      };
+    };
   };
   
   boot.kernel.sysctl = {
@@ -108,7 +131,19 @@
   nix = {
     package = pkgs.nixVersions.latest;
 
-    settings.experimental-features = ["nix-command" "flakes"];
+    settings = {
+      experimental-features = ["nix-command" "flakes"];
+      
+      substituters = [
+        "https://cache.nixos.org/"
+        "https://cache.garnix.io"
+      ];
+
+      trusted-public-keys = [
+        "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
+        "cache.garnix.io:CTFPyKSLcx5RMJKfLo5EEPUObbA78b0YQ2DTCJXqr9g="
+      ];
+    };
   };
 
   users.users.chell = {
@@ -290,6 +325,7 @@
   networking.firewall = {
     enable = true;
     allowedTCPPorts = [ 80 443 25565 ];
+    allowedUDPPorts = [ 51820 ];
     allowedUDPPortRanges = [
       { from = 28800; to = 28802; }
       { from = 25565; to = 25566; }
