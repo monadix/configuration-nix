@@ -80,6 +80,7 @@
         background = ./wallpapers/nixos-nord-dark.png;
         greeters.gtk = {
           enable = true;
+
           theme = {
             name = "Nordic";
             package = pkgs.nordic;
@@ -87,6 +88,11 @@
           iconTheme = {
             name = "Nordzy";
             package = pkgs.nordzy-icon-theme;
+          };
+          cursorTheme = {
+            package = pkgs.nordzy-cursor-theme;
+            name = "Nordzy-cursors";
+            size = 32;
           };
         };
       };
