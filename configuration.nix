@@ -177,6 +177,7 @@
   environment.systemPackages = with pkgs; [
     acpi
     android-tools
+    c3c
     cabal-install
     dart
     dive
