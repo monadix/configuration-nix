@@ -1,4 +1,4 @@
-{ config, pkgs, ... }: { 
+{ config, pkgs, c3c, ... }: { 
   networking = {
     networkmanager.enable = true;
     dhcpcd = {
