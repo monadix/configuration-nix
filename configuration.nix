@@ -255,6 +255,9 @@
     enable = true;
 
     whitelist = [
+      # hehe
+      "internal.madrigal.ru"
+
       "rutracker.org"
       "rutracker.cc"
 
