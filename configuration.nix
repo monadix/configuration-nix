@@ -245,7 +245,8 @@
     enable = true;
 
     packages = [
-      { appId = "app.zen_browser.zen"; origin = "flathub"; }
+      # didn't like it
+      # { appId = "app.zen_browser.zen"; origin = "flathub"; }
     ];
   };
 
