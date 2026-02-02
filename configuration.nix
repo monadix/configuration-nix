@@ -21,7 +21,7 @@
           {
             publicKey = "4E0z2Zo4TvhtEPnC7gWcFlG6vpPR/aRJEKS8uFg2nFg=";
 
-            allowedIPs = [ "172.16.16.0/20" "172.16.0.0/22" ];
+            allowedIPs = [ "172.16.16.0/20" "172.16.0.0/22" "172.16.32.0/22" ];
 
             endpoint = "213.138.72.10:13232";
 
