@@ -128,6 +128,7 @@
       experimental-features = ["nix-command" "flakes"];
       
       substituters = [
+        "https://mirror.yandex.ru/nixos"
         "https://cache.nixos.org/"
       ];
 
