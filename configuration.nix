@@ -1,34 +1,19 @@
-{ config, pkgs, c3c, ... }: { 
+{ 
+  config,
+  pkgs,
+
+  sops-nix,
+
+  c3c,
+
+  ... 
+}: 
+{ 
   networking = {
     networkmanager.enable = true;
     dhcpcd = {
       wait = "background";
       extraConfig = "noarp";
-    };
-
-    wg-quick.interfaces = {
-      wg0 = {
-        autostart = false;
-
-        address = [ "192.168.78.25/32" ];
-        listenPort = 51820;
-
-        privateKeyFile = "~/private.key";
-
-        dns = [ "172.16.0.101" ];
-
-        peers = [
-          {
-            publicKey = "4E0z2Zo4TvhtEPnC7gWcFlG6vpPR/aRJEKS8uFg2nFg=";
-
-            allowedIPs = [ "172.16.16.0/20" "172.16.0.0/22" "172.16.32.0/22" ];
-
-            endpoint = "213.138.72.10:13232";
-
-            persistentKeepalive = 5;
-          }
-        ];
-      };
     };
   };
   
@@ -159,9 +144,6 @@
     hashedPassword = "$y$j9T$dvuZmpawy1e63KSJpnLSE1$IVAAzcmcisaRsfNRMDikox36MOyH.e/DVOcJZG0cvAB";
     
     shell = pkgs.nushell;
-
-    packages = with pkgs; [
-    ];
   };
 
   nixpkgs.config = {
@@ -207,6 +189,44 @@
     wget
   ];
 
+  sops = {
+    defaultSopsFile = ./secrets/secrets.yaml;
+
+    age = {
+      sshKeyPaths = [ "/etc/ssh/ssh_host_ed25519_key" ];
+
+      keyFile = "/var/lib/sops-nix/keys.txt";
+      generateKey = true;
+    };
+
+    secrets.mdr-wg-private-key = {};
+  };
+
+  networking.wg-quick.interfaces = {
+    mdr = {
+      autostart = false;
+
+      address = [ "192.168.78.25/32" ];
+      listenPort = 51820;
+
+      privateKeyFile = config.sops.secrets.mdr-wg-private-key.path;
+
+      dns = [ "172.16.0.101" ];
+
+      peers = [
+        {
+          publicKey = "4E0z2Zo4TvhtEPnC7gWcFlG6vpPR/aRJEKS8uFg2nFg=";
+
+          allowedIPs = [ "172.16.16.0/20" "172.16.0.0/22" "172.16.32.0/22" ];
+
+          endpoint = "213.138.72.10:13232";
+
+          persistentKeepalive = 5;
+        }
+      ];
+    };
+  };
+
   virtualisation.containers.enable = true;
 
   virtualisation.docker.enable = true;
@@ -239,15 +259,6 @@
     config = {
       common.default = "*";
     };
-  };
-
-  services.flatpak = {
-    enable = true;
-
-    packages = [
-      # didn't like it
-      # { appId = "app.zen_browser.zen"; origin = "flathub"; }
-    ];
   };
 
   services.zapret = {

@@ -6,7 +6,10 @@
 
     nixpkgs-stable.url = "github:NixOS/nixpkgs/25.11";
 
-    flatpaks.url = "github:gmodena/nix-flatpak";
+    sops-nix = {
+      url = "github:Mic92/sops-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
     c3c = {
       url = "github:c3lang/c3c";
@@ -14,12 +17,19 @@
     };
   };
   
-  outputs = { self, nixpkgs, nixpkgs-stable, flatpaks, c3c, ... }: 
+  outputs = { 
+    self,
+    nixpkgs,
+    nixpkgs-stable,
+    sops-nix,
+    c3c,
+    ... 
+  }: 
   let
     system = "x86_64-linux";
     commonModules = [ 
       ./configuration.nix
-      flatpaks.nixosModules.nix-flatpak
+      sops-nix.nixosModules.sops
       {
         _module.args = { c3c = c3c.packages.${system}.c3c; };
       }
