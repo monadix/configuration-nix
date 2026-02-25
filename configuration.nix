@@ -138,11 +138,15 @@
     };
   };
 
+  sops.secrets.chell-password = {
+    neededForUsers = true;
+  };
+
   users.users.chell = {
     isNormalUser = true;
     description = "chell";
     extraGroups = [ "networkmanager" "wheel" "docker" "plugdev" "dialout" "sys" "lp" "video" ];
-    hashedPassword = "$y$j9T$dvuZmpawy1e63KSJpnLSE1$IVAAzcmcisaRsfNRMDikox36MOyH.e/DVOcJZG0cvAB";
+    hashedPasswordFile = config.sops.secrets.chell-password.path;
     
     shell = pkgs.nushell;
   };
@@ -199,9 +203,9 @@
       keyFile = "/var/lib/sops-nix/keys.txt";
       generateKey = true;
     };
-
-    secrets.mdr-wg-private-key = {};
   };
+
+  sops.secrets.mdr-wg-private-key = {};
 
   networking.wg-quick.interfaces = {
     mdr = {
