@@ -232,6 +232,11 @@
     };
   };
 
+  services.v2raya = {
+    enable = true;
+    package = pkgs.xray;
+  };
+
   virtualisation.containers.enable = true;
 
   virtualisation.docker.enable = true;
