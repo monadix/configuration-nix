@@ -10,13 +10,16 @@
 }: 
 { 
   networking = {
+    nftables.enable = true;
+
     networkmanager.enable = true;
+
     dhcpcd = {
       wait = "background";
       extraConfig = "noarp";
     };
   };
-  
+
   boot.kernel.sysctl = {
     "net.ipv4.ip_default_ttl" = 65;
     "net.ipv6.conf.all.hop_limit" = 65;
@@ -232,9 +235,17 @@
     };
   };
 
-  services.v2raya = {
+  programs.clash-verge = {
     enable = true;
-    package = pkgs.xray;
+    serviceMode = true;
+    tunMode = true;
+  };
+
+  networking.firewall = {
+    trustedInterfaces = [ "Mihomo" ];
+    extraReversePathFilterRules = ''
+      iifname { "Mihomo" } accept comment "trusted interface"
+    '';
   };
 
   virtualisation.containers.enable = true;
@@ -273,6 +284,7 @@
 
   services.zapret = {
     enable = true;
+    configureFirewall = false;
 
     whitelist = [
       # hehe
@@ -332,6 +344,24 @@
     params = [
       "--dpi-desync=multidisorder"
     ];
+  };
+
+  networking.nftables.tables.zapret = {
+    family = "inet";
+    content = ''
+      chain postrouting {
+        type filter hook postrouting priority mangle; policy accept;
+
+        tcp dport { 80, 443 }
+        ct original packets 1-6
+        
+        # Fixed syntax: Use bitwise AND instead of /
+        # Logic: (mark & 0x40000000) != 0x40000000
+        meta mark and 0x40000000 != 0x40000000
+        
+        queue num 200 bypass
+      }
+    '';
   };
 
   services.openssh = {
