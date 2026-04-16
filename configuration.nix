@@ -10,15 +10,29 @@
 }: 
 { 
   networking = {
+    firewall.checkReversePath = "loose";
+
     nftables.enable = true;
 
-    networkmanager.enable = true;
+    networkmanager = {
+      enable = true;
+
+      plugins = with pkgs; [
+        networkmanager-l2tp
+        networkmanager-strongswan
+      ];
+    };
 
     dhcpcd = {
       wait = "background";
       extraConfig = "noarp";
     };
   };
+
+  environment.etc."strongswan.conf" = {
+    text = '''';
+  };
+  services.strongswan.enable = true;
 
   boot.kernel.sysctl = {
     "net.ipv4.ip_default_ttl" = 65;
@@ -154,12 +168,20 @@
     shell = pkgs.nushell;
   };
 
-  nixpkgs.config = {
-    allowUnfree = true;
-    permittedInsecurePackages = [
-      "electron-24.8.6"
-      "electron-19.1.9"
-    ];
+  nixpkgs = {
+    config = {
+      allowUnfree = true;
+      permittedInsecurePackages = [
+        "electron-24.8.6"
+        "electron-19.1.9"
+      ];
+    };
+
+    #overlays = [
+    #  (final: prev: {
+    #    strongswan = prev.strongswan.override { enableNetworkManager = true; };
+    #  })
+    #];
   };
 
   environment.systemPackages = with pkgs; [
@@ -208,30 +230,80 @@
     };
   };
 
-  sops.secrets.mdr-wg-private-key = {};
+  sops = {
+    secrets = {
+      mdr-l2tp-psk = {
+        group = "networkmanager";
+        mode = "0440";
+      };
+      mdr-l2tp-user = {
+        group = "networkmanager";
+        mode = "0440";
+      };
+      mdr-l2tp-pass = {
+        group = "networkmanager";
+        mode = "0440";
+      };
+    };
 
-  networking.wg-quick.interfaces = {
-    mdr = {
-      autostart = false;
+    templates.mdr-l2tp-env = {
+      group = "networkmanager";
+      mode = "0440";
+      content = ''
+        MDR_L2TP_PSK=${config.sops.placeholder.mdr-l2tp-psk}
+        MDR_L2TP_USER=${config.sops.placeholder.mdr-l2tp-user}
+        MDR_L2TP_PASS=${config.sops.placeholder.mdr-l2tp-pass}
+      '';
+    };
+  };
 
-      address = [ "192.168.78.25/32" ];
-      listenPort = 51820;
+  networking.networkmanager.ensureProfiles = {
+    environmentFiles = [ config.sops.templates.mdr-l2tp-env.path ];
+    profiles = {
+      mdr-l2tp = {
+        connection = {
+          id = "mdr-l2tp";
+          type = "vpn";
+          autoconnect = false;
+        };
 
-      privateKeyFile = config.sops.secrets.mdr-wg-private-key.path;
+        vpn = {
+          service-type = "org.freedesktop.NetworkManager.l2tp";
+          gateway = "rnd.vpn.madrigal.ru";
+          user = "$MDR_L2TP_USER";
 
-      dns = [ "172.16.0.101" ];
+          ipsec-enabled = "yes";
+          ipsec-psk = "$MDR_L2TP_PSK";
+          ipsec-gateway-id = "%any";
 
-      peers = [
-        {
-          publicKey = "4E0z2Zo4TvhtEPnC7gWcFlG6vpPR/aRJEKS8uFg2nFg=";
+          password-flags = "0";
+        };
 
-          allowedIPs = [ "172.16.16.0/20" "172.16.0.0/22" "172.16.32.0/22" ];
+        vpn-secrets = {
+          password = "$MDR_L2TP_PASS";
+        };
 
-          endpoint = "213.138.72.10:13232";
+        ipv4 = {
+          method = "auto";
 
-          persistentKeepalive = 5;
-        }
-      ];
+          never-default = "true";
+
+          ignore-auto-routes = "true";
+          ignore-auto-dns = "false";
+
+          #route1 = "172.16.0.0/22,,0";
+          #route2 = "172.16.16.0/20,,0";
+          #route3 = "172.16.32.0/22,,0";
+          route1 = "172.16.0.100/32,,0";
+          route2 = "172.16.0.101/32,,0";
+          route3 = "172.16.20.2/32,,0";
+
+          dns = "172.16.0.101";
+          dns-search = "internal.madrigal.ru";
+        };
+        
+        ipv6.method = "disabled";
+      };
     };
   };
 
@@ -344,24 +416,6 @@
     params = [
       "--dpi-desync=multidisorder"
     ];
-  };
-
-  networking.nftables.tables.zapret = {
-    family = "inet";
-    content = ''
-      chain postrouting {
-        type filter hook postrouting priority mangle; policy accept;
-
-        tcp dport { 80, 443 }
-        ct original packets 1-6
-        
-        # Fixed syntax: Use bitwise AND instead of /
-        # Logic: (mark & 0x40000000) != 0x40000000
-        meta mark and 0x40000000 != 0x40000000
-        
-        queue num 200 bypass
-      }
-    '';
   };
 
   services.openssh = {
