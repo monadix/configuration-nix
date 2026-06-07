@@ -4,6 +4,9 @@ keys:
 
   - &workstation age1hyda8g30kemzsggh8nyfmk2zlshvq2qvmtze9qv80js5xyhl0eqqcckk9x
   - &workstation-system age1z005zeuaj30gmw735emtzk7mm0zxp4j3q6syc74e45hefukupe7qf5nnke
+
+  - &nixos age1wxcds2j42je9gh0qg0qz9d9c8ax57dk2ykpftmnknp0ln0m8cefqzlxnmv
+  - &nixos-system age1e2zkarsd8w6v50mrc4j46eltdp96g8uyj8d2kwwjtkp9yvt0efpsd9eyua
 creation_rules:
   - path_regex: secrets/[^/]+\.(yaml|json|env|ini)$
     key_groups:
@@ -12,3 +15,5 @@ creation_rules:
       - *thinkpad-system
       - *workstation
       - *workstation-system
+      - *nixos
+      - *nixos-system
