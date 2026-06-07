@@ -10,11 +10,9 @@
     initrd.kernelModules = [ ];
 
     extraModulePackages = with config.boot.kernelPackages; [
-      rtl8821au
       v4l2loopback
     ];
     kernelModules = [
-      "rtl8821au"
       "v4l2loopback"
       "kvm-intel"
     ];
@@ -101,6 +99,7 @@
     };
     
     nvidia = {
+      package = config.boot.kernelPackages.nvidiaPackages.legacy_580;
       modesetting.enable = true;
       powerManagement = {
         enable = false;
