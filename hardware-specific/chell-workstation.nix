@@ -15,8 +15,6 @@
         "rtsx_pci_sdmmc"
       ];
       kernelModules = [ ];
-
-      luks.devices."cryptroot".device = "/dev/disk/by-uuid/bd2a93e8-785b-4665-96a9-fe8d298c18fa";
     };
 
     kernelModules = [ 
@@ -47,18 +45,6 @@
       };
     };
   };
-
-  fileSystems."/" =
-    { device = "/dev/mapper/cryptroot";
-      fsType = "ext4";
-    };
-
-  fileSystems."/boot" =
-    { device = "/dev/disk/by-uuid/91BC-482A";
-      fsType = "vfat";
-    };
-
-  swapDevices = [ ];
 
   networking.useDHCP = lib.mkDefault true;
   # networking.interfaces.eno2.useDHCP = lib.mkDefault true;

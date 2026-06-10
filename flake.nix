@@ -15,6 +15,11 @@
       url = "github:c3lang/c3c";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    disko = {
+      url = "github:nix-community/disko";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
   
   outputs = { 
@@ -23,6 +28,7 @@
     nixpkgs-stable,
     sops-nix,
     c3c,
+    disko,
     ... 
   }: 
   let
@@ -57,7 +63,7 @@
 
       chell-workstation = nixpkgs.lib.nixosSystem rec {
         system = "x86_64-linux";
-        modules = [ ./hardware-specific/chell-workstation.nix ] ++ commonModules;
+        modules = [ ./hardware-specific/chell-workstation.nix ./hardware-specific/chell-workstation-disko.nix disko.nixosModules.disko ] ++ commonModules;
       };
     };
   };
