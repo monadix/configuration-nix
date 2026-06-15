@@ -155,17 +155,28 @@
     };
   };
 
-  sops.secrets.chell-password = {
-    neededForUsers = true;
+  sops.secrets = {
+    chell-password = {
+      neededForUsers = true;
+    };
+    root-password = {
+      neededForUsers = true;
+    };
   };
 
-  users.users.chell = {
-    isNormalUser = true;
-    description = "chell";
-    extraGroups = [ "networkmanager" "wheel" "docker" "plugdev" "dialout" "sys" "lp" "video" ];
-    hashedPasswordFile = config.sops.secrets.chell-password.path;
-    
-    shell = pkgs.nushell;
+  users.users = {
+    chell = {
+      isNormalUser = true;
+      description = "chell";
+      extraGroups = [ "networkmanager" "wheel" "docker" "plugdev" "dialout" "sys" "lp" "video" ];
+      hashedPasswordFile = config.sops.secrets.chell-password.path;
+      
+      shell = pkgs.nushell;
+    };
+
+    root = {
+      hashedPasswordFile = config.sops.secrets.root-password.path;
+    };
   };
 
   nixpkgs = {
