@@ -1,6 +1,7 @@
 { 
   config,
   pkgs,
+  pkgsStable,
 
   sops-nix,
 
@@ -317,6 +318,8 @@
 
   programs.clash-verge = {
     enable = true;
+    package = pkgsStable.clash-verge-rev;
+
     serviceMode = true;
     tunMode = true;
   };

@@ -4,7 +4,7 @@
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
 
-    nixpkgs-stable.url = "github:NixOS/nixpkgs/25.11";
+    nixpkgs-stable.url = "github:NixOS/nixpkgs/26.05";
 
     sops-nix = {
       url = "github:Mic92/sops-nix";
@@ -46,24 +46,28 @@
   {
 
     nixosConfigurations = {
-      chell-nixos = nixpkgs.lib.nixosSystem {
+      chell-nixos = nixpkgs.lib.nixosSystem rec {
         system = "x86_64-linux";
         modules = [ ./hardware-specific/chell-nixos.nix ] ++ commonModules;
+        specialArgs = { pkgsStable = pkgsStableFor system; };
       };
       
-      chell-ssd = nixpkgs.lib.nixosSystem {
+      chell-ssd = nixpkgs.lib.nixosSystem rec {
         system = "x86_64-linux";
         modules = [ ./hardware-specific/chell-ssd.nix ] ++ commonModules;
+        specialArgs = { pkgsStable = pkgsStableFor system; };
       };
 
       chell-thinkpad = nixpkgs.lib.nixosSystem rec {
         system = "x86_64-linux";
         modules = [ ./hardware-specific/chell-thinkpad.nix ] ++ commonModules;
+        specialArgs = { pkgsStable = pkgsStableFor system; };
       };
 
       chell-workstation = nixpkgs.lib.nixosSystem rec {
         system = "x86_64-linux";
         modules = [ ./hardware-specific/chell-workstation.nix ./hardware-specific/chell-workstation-disko.nix disko.nixosModules.disko ] ++ commonModules;
+        specialArgs = { pkgsStable = pkgsStableFor system; };
       };
     };
   };
