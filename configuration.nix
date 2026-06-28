@@ -318,6 +318,29 @@
     };
   };
 
+  sops.secrets.lena727-wg-private-key = {};
+  sops.secrets.lena727-wg-preshared-key = {};
+
+  networking.wg-quick.interfaces = {
+    lena727 = {
+      autostart = false;
+      address = [ "10.8.0.17/24" ];
+      dns = [ "8.8.8.8" ];
+      #mtu = 1280;
+      privateKeyFile = config.sops.secrets.lena727-wg-private-key.path;
+
+      peers = [
+        {
+          publicKey = "NjJfKekR5QmqlC8AYioRXvgBIeNlYGFElJjRql7WvT0=";
+          allowedIPs = [ "0.0.0.0/0" "::/0" ];
+          endpoint = "ams.server.lena727.ru:51820";
+          persistentKeepalive = 0;
+          presharedKeyFile = config.sops.secrets.lena727-wg-preshared-key.path;
+        }
+      ];
+    };
+  };
+
   programs.clash-verge = {
     enable = true;
     package = pkgsStable.clash-verge-rev;
