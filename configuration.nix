@@ -144,6 +144,8 @@
 
     settings = {
       experimental-features = ["nix-command" "flakes"];
+
+      trusted-users = [ "root" "chell" ];
       
       substituters = [
         "https://mirror.yandex.ru/nixos"
