@@ -369,6 +369,8 @@
   programs = {
     dconf.enable = true;
 
+    fuse.enable = true;
+
     neovim = { 
       enable = true;
       defaultEditor = true;
