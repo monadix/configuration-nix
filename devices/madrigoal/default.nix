@@ -1,12 +1,28 @@
-{ config, lib, pkgs, modulesPath, ... }:
+{ 
+  config,
+  lib,
+  inputs,
+  pkgs,
+  ...
+}:
 {
-  imports =
-    [ (modulesPath + "/installer/scan/not-detected.nix")
-    ];
+  imports = [ 
+    inputs.disko.nixosModules.default
+    ./disko.nix
+  ];
 
   boot = {
-    initrd.availableKernelModules = [ "xhci_pci" "ahci" "usb_storage" "usbhid" "sd_mod" "rtsx_pci_sdmmc" ];
-    initrd.kernelModules = [ ];
+    initrd = {
+      availableKernelModules = [ 
+        "xhci_pci"
+        "ahci"
+        "usb_storage"
+        "usbhid"
+        "sd_mod"
+        "rtsx_pci_sdmmc"
+      ];
+      kernelModules = [ ];
+    };
 
     kernelModules = [ 
       "kvm-intel" 
@@ -37,45 +53,33 @@
     };
   };
 
-  fileSystems."/" =
-    { device = "/dev/disk/by-uuid/10c45464-e2dd-4a55-917c-6cc77d02ef36";
-      fsType = "ext4";
-    };
-
-  fileSystems."/boot" =
-    { device = "/dev/disk/by-uuid/339A-0925";
-      fsType = "vfat";
-    };
-
-  swapDevices = [ ];
-
   networking.useDHCP = lib.mkDefault true;
-  # networking.interfaces.eno2.useDHCP = lib.mkDefault true;
-  # networking.interfaces.enp0s20f0u6.useDHCP = lib.mkDefault true;
-  # networking.interfaces.wlo1.useDHCP = lib.mkDefault true;
   
-  networking.hostName = "chell-ssd";
+  networking.hostName = "MDR024";
 
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
   hardware = {
+    enableRedistributableFirmware = true;
+
     cpu.intel.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
     graphics = {
       enable = true;
       enable32Bit = true;
 
       extraPackages = with pkgs; [
-        amdvlk
         intel-media-driver
 	      libvdpau-va-gl
       ];
 
       extraPackages32 = with pkgs.driversi686Linux; [
-        amdvlk
         intel-media-driver
 	      libvdpau-va-gl
       ];
     };
+    bluetooth.enable = true;
   };
+
+  services.blueman.enable = true;
 
   zramSwap = {
     enable = true;

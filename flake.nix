@@ -2,6 +2,8 @@
   description = "Chell's system flake";
   
   inputs = {
+    assets.url = "github:monadix/assets";
+
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
 
     nixpkgs-stable.url = "github:NixOS/nixpkgs/26.05";
@@ -22,13 +24,11 @@
     };
   };
   
-  outputs = { 
+  outputs = inputs @ { 
     self,
     nixpkgs,
     nixpkgs-stable,
     sops-nix,
-    c3c,
-    disko,
     ... 
   }: 
   let
@@ -37,37 +37,33 @@
       ./configuration.nix
       sops-nix.nixosModules.sops
       {
-        _module.args = { c3c = c3c.packages.${system}.c3c; };
+        _module.args = { 
+          inherit system pkgsStable;
+        };
       }
     ];
 
-    pkgsStableFor = system: nixpkgs-stable.legacyPackages."${system}";
+    pkgsStable = nixpkgs-stable.legacyPackages."${system}";
   in 
   {
 
     nixosConfigurations = {
-      chell-nixos = nixpkgs.lib.nixosSystem rec {
-        system = "x86_64-linux";
-        modules = [ ./hardware-specific/chell-nixos.nix ] ++ commonModules;
-        specialArgs = { pkgsStable = pkgsStableFor system; };
+      conputer = nixpkgs.lib.nixosSystem rec {
+        inherit system;
+        modules = [ ./devices/conputer.nix ] ++ commonModules;
       };
       
-      chell-ssd = nixpkgs.lib.nixosSystem rec {
-        system = "x86_64-linux";
-        modules = [ ./hardware-specific/chell-ssd.nix ] ++ commonModules;
-        specialArgs = { pkgsStable = pkgsStableFor system; };
+      naumbuk = nixpkgs.lib.nixosSystem rec {
+        inherit system;
+        modules = [ ./devices/naumbuk.nix ] ++ commonModules;
       };
 
-      chell-thinkpad = nixpkgs.lib.nixosSystem rec {
-        system = "x86_64-linux";
-        modules = [ ./hardware-specific/chell-thinkpad.nix ] ++ commonModules;
-        specialArgs = { pkgsStable = pkgsStableFor system; };
-      };
-
-      chell-workstation = nixpkgs.lib.nixosSystem rec {
-        system = "x86_64-linux";
-        modules = [ ./hardware-specific/chell-workstation.nix ./hardware-specific/chell-workstation-disko.nix disko.nixosModules.disko ] ++ commonModules;
-        specialArgs = { pkgsStable = pkgsStableFor system; };
+      MDR024 = nixpkgs.lib.nixosSystem rec {
+        inherit system;
+        modules = [ 
+          ./devices/madrigoal
+        ] ++ commonModules;
+        specialArgs = { inherit inputs; };
       };
     };
   };

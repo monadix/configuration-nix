@@ -5,10 +5,6 @@
 , 
 ... }:
 {
-  imports =
-    [ (modulesPath + "/installer/scan/not-detected.nix")
-    ];
-
   boot = {
     initrd.availableKernelModules = [ "xhci_pci" "ahci" "usb_storage" "usbhid" "sd_mod" "rtsx_pci_sdmmc" ];
     initrd.kernelModules = [ ];
@@ -55,14 +51,13 @@
   swapDevices = [ ];
 
   networking.useDHCP = lib.mkDefault true;
-  # networking.interfaces.eno2.useDHCP = lib.mkDefault true;
-  # networking.interfaces.enp0s20f0u6.useDHCP = lib.mkDefault true;
-  # networking.interfaces.wlo1.useDHCP = lib.mkDefault true;
   
-  networking.hostName = "chell-thinkpad";
+  networking.hostName = "naumbuk";
 
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
   hardware = {
+    enableRedistributableFirmware = true;
+
     cpu.amd.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
 
     graphics = { 

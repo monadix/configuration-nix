@@ -1,12 +1,10 @@
 { 
   config,
+  system,
+  inputs,
+
   pkgs,
   pkgsStable,
-
-  sops-nix,
-
-  c3c,
-
   ... 
 }: 
 { 
@@ -41,7 +39,7 @@
   };
 
   boot.loader.grub = {
-    splashImage = ./wallpapers/nixos-nord-dark.png;
+    splashImage = "${inputs.assets.images}/nixos-nord-dark.png";
   };
 
   time.timeZone = "Europe/Moscow";
@@ -80,7 +78,7 @@
 
       lightdm = {
         enable = true;
-        background = ./wallpapers/nixos-nord-dark.png;
+        background = "${inputs.assets.images}/nixos-nord-dark.png";
         greeters.gtk = {
           enable = true;
 
@@ -145,7 +143,7 @@
     settings = {
       experimental-features = ["nix-command" "flakes"];
 
-      trusted-users = [ "root" "chell" ];
+      trusted-users = [ "root" "monadix" ];
       
       substituters = [
         "https://mirror.yandex.ru/nixos"
@@ -159,7 +157,7 @@
   };
 
   sops.secrets = {
-    chell-password = {
+    monadix-password = {
       neededForUsers = true;
     };
     root-password = {
@@ -168,11 +166,11 @@
   };
 
   users.users = {
-    chell = {
+    monadix = {
       isNormalUser = true;
-      description = "chell";
+      description = "monadix";
       extraGroups = [ "networkmanager" "wheel" "docker" "plugdev" "dialout" "sys" "lp" "video" ];
-      hashedPasswordFile = config.sops.secrets.chell-password.path;
+      hashedPasswordFile = config.sops.secrets.monadix-password.path;
       
       shell = pkgs.nushell;
     };
@@ -201,7 +199,7 @@
   environment.systemPackages = with pkgs; [
     acpi
     android-tools
-    c3c
+    inputs.c3c.packages.${system}.c3c
     cabal-install
     dart
     dive

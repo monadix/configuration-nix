@@ -1,5 +1,20 @@
 {
   "nodes": {
+    "assets": {
+      "locked": {
+        "lastModified": 1784640953,
+        "narHash": "sha256-JV5V9R0v8FrHpab4v+YipCfosEVmyc7JnWYKTEOJNCU=",
+        "owner": "monadix",
+        "repo": "assets",
+        "rev": "fa342936601a6e431c4c0198c62a77a90ac31b11",
+        "type": "github"
+      },
+      "original": {
+        "owner": "monadix",
+        "repo": "assets",
+        "type": "github"
+      }
+    },
     "c3c": {
       "inputs": {
         "flake-utils": "flake-utils",
@@ -93,6 +108,7 @@
     },
     "root": {
       "inputs": {
+        "assets": "assets",
         "c3c": "c3c",
         "disko": "disko",
         "nixpkgs": "nixpkgs",

@@ -1,10 +1,6 @@
 { config, lib, pkgs, modulesPath, ... }:
 
 {
-  imports =
-    [ (modulesPath + "/installer/scan/not-detected.nix")
-    ];
-
   boot = {
     initrd.availableKernelModules = [ "xhci_pci" "ehci_pci" "ahci" "nvme" "usb_storage" "usbhid" "sd_mod" ];
     initrd.kernelModules = [ ];
@@ -75,15 +71,15 @@
   swapDevices = [ ];
 
   networking.useDHCP = lib.mkDefault true;
-  # networking.interfaces.enp0s20u4u1.useDHCP = lib.mkDefault true;
-  # networking.interfaces.enp5s0.useDHCP = lib.mkDefault true;
   
-  networking.hostName = "chell-nixos";
+  networking.hostName = "conputer";
 
   services.xserver.videoDrivers = [ "nvidia" ];
 
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
   hardware = {
+    enableRedistributableFirmware = true;
+
     cpu.intel.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
     graphics = {
       enable = true;
