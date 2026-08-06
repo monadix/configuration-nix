@@ -169,7 +169,17 @@
     monadix = {
       isNormalUser = true;
       description = "monadix";
-      extraGroups = [ "networkmanager" "wheel" "docker" "plugdev" "dialout" "sys" "lp" "video" ];
+      extraGroups = [ 
+        "cdrom"
+        "dialout" 
+        "docker" 
+        "lp" 
+        "networkmanager" 
+        "plugdev" 
+        "sys" 
+        "video" 
+        "wheel" 
+      ];
       hashedPasswordFile = config.sops.secrets.monadix-password.path;
       
       shell = pkgs.nushell;
@@ -365,6 +375,8 @@
   };
 
   programs = {
+    cdemu.enable = true;
+    
     dconf.enable = true;
 
     fuse.enable = true;

@@ -38,7 +38,7 @@
       sops-nix.nixosModules.sops
       {
         _module.args = { 
-          inherit system pkgsStable;
+          inherit system pkgsStable inputs;
         };
       }
     ];
@@ -63,7 +63,6 @@
         modules = [ 
           ./devices/madrigoal
         ] ++ commonModules;
-        specialArgs = { inherit inputs; };
       };
     };
   };
