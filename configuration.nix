@@ -84,7 +84,7 @@
 
           theme = {
             name = "Nordic";
-            package = pkgs.nordic;
+            package = pkgsStable.nordic;
           };
           iconTheme = {
             name = "Nordzy";
