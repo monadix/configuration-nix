@@ -16,31 +16,19 @@
     loader = {
       grub = {
         enable = true;
+        efiSupport = true;
+        useOSProber = false;
+
         device = "nodev";
 
-        useOSProber = false;
-        efiSupport = true;
-        efiInstallAsRemovable = true;
         extraGrubInstallArgs = [ "--disable-shim-lock" ];
 
         configurationLimit = 20;
-
-        extraEntries = ''
-          menuentry "Windus" {
-            insmod part_gpt
-            insmod chain
-            chainloader /EFI/Microsoft/Boot/bootmgfw.efi
-          }
-          menuentry "Arch" {
-            linux /vmlinuz-linux root=/dev/nvme0n1p3 rw
-            initrd /intel-ucode.img /initramfs-linux.img
-          }
-        '';
       };
       
       efi = {
-        canTouchEfiVariables = false;
-        efiSysMountPoint = "/boot";
+        canTouchEfiVariables = true;
+        efiSysMountPoint = "/boot/efi";
       };
     };
   };
@@ -63,7 +51,7 @@
       options = [ "subvol=nix" "compress=zstd" "noatime" ];
     };
 
-  fileSystems."/boot" =
+  fileSystems."/boot/efi" =
     { device = "/dev/disk/by-uuid/5464-CF3B";
       fsType = "vfat";
     };
@@ -104,6 +92,8 @@
       open = false;
       nvidiaSettings = true;
     };
+
+    bluetooth.enable = true;
   };
 
   zramSwap = {
