@@ -36,30 +36,29 @@
     commonModules = [ 
       ./configuration.nix
       sops-nix.nixosModules.sops
-      {
-        _module.args = { 
-          inherit system pkgsStable inputs;
-        };
-      }
     ];
 
     pkgsStable = nixpkgs-stable.legacyPackages."${system}";
+
+    specialArgs = {
+      inherit system pkgsStable inputs;
+    };
   in 
   {
 
     nixosConfigurations = {
       conputer = nixpkgs.lib.nixosSystem rec {
-        inherit system;
+        inherit system specialArgs;
         modules = [ ./devices/conputer.nix ] ++ commonModules;
       };
       
       naumbuk = nixpkgs.lib.nixosSystem rec {
-        inherit system;
+        inherit system specialArgs;
         modules = [ ./devices/naumbuk.nix ] ++ commonModules;
       };
 
       MDR024 = nixpkgs.lib.nixosSystem rec {
-        inherit system;
+        inherit system specialArgs;
         modules = [ 
           ./devices/madrigoal
         ] ++ commonModules;
