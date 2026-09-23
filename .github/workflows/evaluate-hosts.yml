@@ -1,0 +1,20 @@
+name: Evaluate hosts
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  evaluate:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DeterminateSystems/nix-installer-action@v19
+      - name: Evaluate new host, Disko, and existing laptop
+        run: |
+          nix eval --raw .#nixosConfigurations.carbom.config.system.build.toplevel.drvPath
+          nix eval --raw .#nixosConfigurations.carbom.config.system.build.diskoScript.drvPath
+          nix eval --raw .#nixosConfigurations.naumbuk.config.system.build.toplevel.drvPath

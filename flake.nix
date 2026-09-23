@@ -57,6 +57,11 @@
         modules = [ ./devices/naumbuk.nix ] ++ commonModules;
       };
 
+      carbom = nixpkgs.lib.nixosSystem {
+        inherit system specialArgs;
+        modules = [ ./devices/carbom ] ++ commonModules;
+      };
+
       MDR024 = nixpkgs.lib.nixosSystem rec {
         inherit system specialArgs;
         modules = [ 

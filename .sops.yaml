@@ -1,19 +1,22 @@
 keys:
-  - &thinkpad age1xs7ywlypc8kznrcnxweycy5vdc463jxqsk848z5n2s7ha6g7k5mq6h5ege
-  - &thinkpad-system age1lwkf6utnzs5yftqtjdmffjvwtctfwj95ex9x6mjytgyasj7z394st3yh2r
+  - &naumbuk age1xs7ywlypc8kznrcnxweycy5vdc463jxqsk848z5n2s7ha6g7k5mq6h5ege
+  - &naumbuk-system age1lwkf6utnzs5yftqtjdmffjvwtctfwj95ex9x6mjytgyasj7z394st3yh2r
 
   - &workstation age1hyda8g30kemzsggh8nyfmk2zlshvq2qvmtze9qv80js5xyhl0eqqcckk9x
   - &workstation-system age1z005zeuaj30gmw735emtzk7mm0zxp4j3q6syc74e45hefukupe7qf5nnke
 
-  - &nixos age1wxcds2j42je9gh0qg0qz9d9c8ax57dk2ykpftmnknp0ln0m8cefqzlxnmv
-  - &nixos-system age1e2zkarsd8w6v50mrc4j46eltdp96g8uyj8d2kwwjtkp9yvt0efpsd9eyua
+  - &conputer age1wxcds2j42je9gh0qg0qz9d9c8ax57dk2ykpftmnknp0ln0m8cefqzlxnmv
+  - &conputer-system age1e2zkarsd8w6v50mrc4j46eltdp96g8uyj8d2kwwjtkp9yvt0efpsd9eyua
+
+  - &carbom age1xmm00efznhh0zrj6fejhzx58ezhl9lz28ahtfymcr34zafgraa3st6zffv
 creation_rules:
   - path_regex: secrets/[^/]+\.(yaml|json|env|ini)$
     key_groups:
     - age:
-      - *thinkpad
-      - *thinkpad-system
+      - *naumbuk
+      - *naumbuk-system
       - *workstation
       - *workstation-system
-      - *nixos
-      - *nixos-system
+      - *conputer
+      - *conputer-system
+      - *carbom
