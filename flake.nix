@@ -22,6 +22,8 @@
       url = "github:nix-community/disko";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    import-tree.url = "github:denful/import-tree";
   };
   
   outputs = inputs @ { 
@@ -33,8 +35,8 @@
   }: 
   let
     system = "x86_64-linux";
-    commonModules = [ 
-      ./configuration.nix
+    commonModules = [
+      (inputs.import-tree ./modules)
       sops-nix.nixosModules.sops
     ];
 
@@ -43,31 +45,19 @@
     specialArgs = {
       inherit system pkgsStable inputs;
     };
+
+    mkHost = hostModule: nixpkgs.lib.nixosSystem {
+      inherit system specialArgs;
+      modules = [ hostModule ] ++ commonModules;
+    };
   in 
   {
 
     nixosConfigurations = {
-      conputer = nixpkgs.lib.nixosSystem rec {
-        inherit system specialArgs;
-        modules = [ ./devices/conputer.nix ] ++ commonModules;
-      };
-      
-      naumbuk = nixpkgs.lib.nixosSystem rec {
-        inherit system specialArgs;
-        modules = [ ./devices/naumbuk.nix ] ++ commonModules;
-      };
-
-      carbom = nixpkgs.lib.nixosSystem {
-        inherit system specialArgs;
-        modules = [ ./devices/carbom ] ++ commonModules;
-      };
-
-      MDR024 = nixpkgs.lib.nixosSystem rec {
-        inherit system specialArgs;
-        modules = [ 
-          ./devices/madrigoal
-        ] ++ commonModules;
-      };
+      conputer = mkHost ./hosts/conputer.nix;
+      naumbuk = mkHost ./hosts/naumbuk.nix;
+      carbom = mkHost ./hosts/carbom;
+      MDR024 = mkHost ./hosts/madrigoal;
     };
   };
 }
