@@ -48,6 +48,5 @@
     algorithm = "zstd";
   };
 
-  # The shared module targets the oldest machine; this is a fresh install.
-  system.stateVersion = lib.mkForce "26.05";
+  system.stateVersion = "26.05";
 }
