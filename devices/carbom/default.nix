@@ -39,6 +39,8 @@
     bluetooth.enable = true;
   };
 
+  services.fprintd.enable = true;
+
   services.udev.extraRules = ''
     ACTION=="add", SUBSYSTEM=="backlight", \
       RUN+="${pkgs.coreutils}/bin/chgrp video /sys/class/backlight/%k/brightness", \

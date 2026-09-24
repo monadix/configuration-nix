@@ -111,8 +111,10 @@
 
   services.printing.enable = true;
 
+
   security.rtkit.enable = true;
   security.pam.services.xscreensaver.enable = true;
+  security.polkit.enable = true;
 
   services.pipewire = {
     enable = true;
@@ -198,12 +200,6 @@
         "electron-19.1.9"
       ];
     };
-
-    #overlays = [
-    #  (final: prev: {
-    #    strongswan = prev.strongswan.override { enableNetworkManager = true; };
-    #  })
-    #];
   };
 
   environment.systemPackages = with pkgs; [
@@ -402,88 +398,8 @@
     };
   };
 
-  services.zapret = {
-    enable = true;
-    configureFirewall = false;
-
-    whitelist = [
-      # hehe
-      "internal.madrigal.ru"
-
-      "rutracker.org"
-      "rutracker.cc"
-
-      ## YouTube
-      "youtube.com"
-      "googlevideo.com"
-      "ytimg.com"
-      "youtu.be"
-
-      ## Discord
-      # Core Discord Domains
-      "discord.com"
-      "discordapp.com"
-      "discord.gg"
-      "dis.gd"
-      "discord.co"
-      "discordapp.net"
-      # CDN Domains
-      "cdn.discordapp.com"
-      "media.discordapp.net"
-      # Major CDN Providers
-      "cloudflare.com"
-      "amazonaws.com"
-      "cloudfront.net"
-      # Voice and Media
-      "discord.media"
-      # API Related (Likely)
-      "*.discord.com"
-      "*.discordapp.com"
-      # Other Official Domains
-      "discord.new"
-      "discord.gift"
-      "discord.gifts"
-      "discordstatus.com"
-      "discord.design"
-      "discord.dev"
-      "discord.store"
-      "discord.tools"
-      "discordpartygames.com"
-      "discord-activities.com"
-      "discordactivities.com"
-      "discordsays.com"
-      "discordmerch.com"
-      "discordsez.com"
-      "*.discord.fr"
-      # Other CDN Providers (Consider)
-      "*.akamai.com"
-      "*.fastly.com"
-      "*.googleusercontent.com"
-    ];
-
-    params = [
-      "--dpi-desync=multidisorder"
-    ];
-  };
-
   services.openssh = {
     enable = true;
-  };
-
-  services.tor = {
-    enable = true;
-    openFirewall = true;
-    client.enable = true;
-    torsocks.enable = true;
-
-    settings = {
-      UseBridges = true;
-      ClientTransportPlugin = "obfs4 exec ${pkgs.obfs4}/bin/lyrebird";
-      Bridge = [
-        "obfs4 141.94.213.29:34975 3CCF6211A6115BA32224E939C179AC2F8269E186 cert=xFW3DRM458PUIuWgi74qRg8IG7JElyFJIYgy9+V+flBQuvfKKonuPJb373QooLLR+eIqMg iat-mode=0"
-        "obfs4 57.128.35.251:17275 3411026D454DF9F94BB263BCED2CFBECEBBAAF4C cert=nDA6sKSsjz28b1XZVZwZcx2dBbRSdYFZR5yvenhtFKQA7zYY6N2otTaa562gZViSNSW9Kg iat-mode=0"
-      ];
-    };
   };
 
   networking.firewall = {
