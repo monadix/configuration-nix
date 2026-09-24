@@ -38,6 +38,8 @@
       sops-nix.nixosModules.sops
     ];
 
+    legacyStateVersion = { system.stateVersion = "23.11"; };
+
     pkgsStable = nixpkgs-stable.legacyPackages."${system}";
 
     specialArgs = {
@@ -49,12 +51,12 @@
     nixosConfigurations = {
       conputer = nixpkgs.lib.nixosSystem rec {
         inherit system specialArgs;
-        modules = [ ./devices/conputer.nix ] ++ commonModules;
+        modules = [ ./devices/conputer.nix legacyStateVersion ] ++ commonModules;
       };
       
       naumbuk = nixpkgs.lib.nixosSystem rec {
         inherit system specialArgs;
-        modules = [ ./devices/naumbuk.nix ] ++ commonModules;
+        modules = [ ./devices/naumbuk.nix legacyStateVersion ] ++ commonModules;
       };
 
       carbom = nixpkgs.lib.nixosSystem {
@@ -66,6 +68,7 @@
         inherit system specialArgs;
         modules = [ 
           ./devices/madrigoal
+          legacyStateVersion
         ] ++ commonModules;
       };
     };
