@@ -39,6 +39,12 @@
     bluetooth.enable = true;
   };
 
+  services.udev.extraRules = ''
+    ACTION=="add", SUBSYSTEM=="backlight", \
+      RUN+="${pkgs.coreutils}/bin/chgrp video /sys/class/backlight/%k/brightness", \
+      RUN+="${pkgs.coreutils}/bin/chmod g+w /sys/class/backlight/%k/brightness"
+  '';
+
   services.blueman.enable = true;
   services.tlp.enable = true;
   services.fwupd.enable = true;
@@ -47,7 +53,4 @@
     enable = true;
     algorithm = "zstd";
   };
-
-  # The shared module targets the oldest machine; this is a fresh install.
-  system.stateVersion = lib.mkForce "26.05";
 }
