@@ -15,21 +15,6 @@
         "type": "github"
       }
     },
-    "assets_2": {
-      "locked": {
-        "lastModified": 1786522562,
-        "narHash": "sha256-yb4aXKRQucSIbluMCLGf1T8ri5oQ0VlTmTQB5S0sHH4=",
-        "owner": "monadix",
-        "repo": "assets",
-        "rev": "f447ec8b678355b7965dfb99e5429fd4c2f8f810",
-        "type": "github"
-      },
-      "original": {
-        "owner": "monadix",
-        "repo": "assets",
-        "type": "github"
-      }
-    },
     "c3c": {
       "inputs": {
         "flake-utils": "flake-utils",
@@ -91,7 +76,9 @@
     },
     "home-config": {
       "inputs": {
-        "assets": "assets_2",
+        "assets": [
+          "assets"
+        ],
         "home-manager": [
           "home-manager"
         ],

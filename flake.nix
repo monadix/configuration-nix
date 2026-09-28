@@ -20,6 +20,7 @@
 
     home-config = {
       url = "github:monadix/home-manager-config";
+      inputs.assets.follows = "assets";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.home-manager.follows = "home-manager";
       inputs.sops-nix.follows = "sops-nix";
