@@ -15,6 +15,21 @@
         "type": "github"
       }
     },
+    "assets_2": {
+      "locked": {
+        "lastModified": 1786522562,
+        "narHash": "sha256-yb4aXKRQucSIbluMCLGf1T8ri5oQ0VlTmTQB5S0sHH4=",
+        "owner": "monadix",
+        "repo": "assets",
+        "rev": "f447ec8b678355b7965dfb99e5429fd4c2f8f810",
+        "type": "github"
+      },
+      "original": {
+        "owner": "monadix",
+        "repo": "assets",
+        "type": "github"
+      }
+    },
     "c3c": {
       "inputs": {
         "flake-utils": "flake-utils",
@@ -74,7 +89,73 @@
         "type": "github"
       }
     },
+    "home-config": {
+      "inputs": {
+        "assets": "assets_2",
+        "home-manager": [
+          "home-manager"
+        ],
+        "import-tree": "import-tree",
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "nixpkgs-master": "nixpkgs-master",
+        "nixpkgs-stable": "nixpkgs-stable",
+        "sops-nix": [
+          "sops-nix"
+        ],
+        "telescope-orgmode": "telescope-orgmode"
+      },
+      "locked": {
+        "lastModified": 1790605038,
+        "narHash": "sha256-IxLevnIr5BoQO2y8tqk3ye1ZqB8gR+AyJYr5hnVtaFg=",
+        "owner": "monadix",
+        "repo": "home-manager-config",
+        "rev": "e4854ea4c9cc51c66a88d007c76e155a6c4f1f9e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "monadix",
+        "repo": "home-manager-config",
+        "type": "github"
+      }
+    },
+    "home-manager": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1790365885,
+        "narHash": "sha256-iQ0ebhiVo64NktTnwft9hNxlFu4j5cvljVxyJaEVIP4=",
+        "owner": "nix-community",
+        "repo": "home-manager",
+        "rev": "7b4c5ec4bedaf1e062bbc1bcaeddbc6bd242aa1b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-community",
+        "repo": "home-manager",
+        "type": "github"
+      }
+    },
     "import-tree": {
+      "locked": {
+        "lastModified": 1788467110,
+        "narHash": "sha256-ljEMTXP/rH0tOvDzc9gzwww6KcHRPRnEHzd9lK48V7s=",
+        "owner": "vic",
+        "repo": "import-tree",
+        "rev": "eb1b52eaecc57f7c136d07ae8a93e724dfecac46",
+        "type": "github"
+      },
+      "original": {
+        "owner": "vic",
+        "repo": "import-tree",
+        "type": "github"
+      }
+    },
+    "import-tree_2": {
       "locked": {
         "lastModified": 1788467110,
         "narHash": "sha256-ljEMTXP/rH0tOvDzc9gzwww6KcHRPRnEHzd9lK48V7s=",
@@ -105,7 +186,38 @@
         "type": "github"
       }
     },
+    "nixpkgs-master": {
+      "locked": {
+        "lastModified": 1790530236,
+        "narHash": "sha256-YNfQoRLiyhD+ZBDx1kuW5nRGmRZow1mDq/Z2tnf8s5I=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "e3f4c7ed049a360c45609e660931837641477080",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "nixpkgs-stable": {
+      "locked": {
+        "lastModified": 1764521362,
+        "narHash": "sha256-M101xMtWdF1eSD0xhiR8nG8CXRlHmv6V+VoY65Smwf4=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "871b9fd269ff6246794583ce4ee1031e1da71895",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "25.11",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "nixpkgs-stable_2": {
       "locked": {
         "lastModified": 1780145889,
         "narHash": "sha256-md0zn0RnwNvPyASas1yG5YUuwQ4ALA6ucL50l0DvqCo=",
@@ -126,9 +238,11 @@
         "assets": "assets",
         "c3c": "c3c",
         "disko": "disko",
-        "import-tree": "import-tree",
+        "home-config": "home-config",
+        "home-manager": "home-manager",
+        "import-tree": "import-tree_2",
         "nixpkgs": "nixpkgs",
-        "nixpkgs-stable": "nixpkgs-stable",
+        "nixpkgs-stable": "nixpkgs-stable_2",
         "sops-nix": "sops-nix"
       }
     },
@@ -164,6 +278,22 @@
       "original": {
         "owner": "nix-systems",
         "repo": "default",
+        "type": "github"
+      }
+    },
+    "telescope-orgmode": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1778787710,
+        "narHash": "sha256-6Eb0dabJ7W+bxypSgmgLVEhkRnXx4Y2RAaFxcC4CBbc=",
+        "owner": "nvim-orgmode",
+        "repo": "telescope-orgmode.nvim",
+        "rev": "214fe56e105bb3d0638f33320ed959911a1bfcb1",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nvim-orgmode",
+        "repo": "telescope-orgmode.nvim",
         "type": "github"
       }
     }

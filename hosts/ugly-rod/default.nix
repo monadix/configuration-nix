@@ -5,7 +5,7 @@
     ./disko.nix
   ];
 
-  networking.hostName = "carbom";
+  networking.hostName = "ugly-rod";
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
 
   boot = {
