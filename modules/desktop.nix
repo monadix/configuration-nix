@@ -1,7 +1,7 @@
 {
+  config,
   inputs,
   pkgs,
-  pkgsStable,
   ...
 }:
 {
@@ -10,40 +10,7 @@
   services.xserver = {
     enable = true;
 
-    displayManager = {
-      session = [
-        {
-          manage = "desktop";
-          name = "xsession";
-          start = "exec ~/.xsession";
-        }
-      ];
-
-      lightdm = {
-        enable = true;
-        background = "${inputs.assets.images}/nixos-nord-dark.png";
-
-        greeters.gtk = {
-          enable = true;
-
-          theme = {
-            name = "Nordic";
-            package = pkgsStable.nordic;
-          };
-
-          iconTheme = {
-            name = "Nordzy";
-            package = pkgs.nordzy-icon-theme;
-          };
-
-          cursorTheme = {
-            package = pkgs.nordzy-cursor-theme;
-            name = "Nordzy-cursors";
-            size = 32;
-          };
-        };
-      };
-    };
+    displayManager.startx.enable = true;
 
     xkb = {
       layout = "us,ru";
@@ -51,7 +18,13 @@
     };
   };
 
-  services.displayManager.defaultSession = "xsession";
+  services.greetd = {
+    enable = true;
+    useTextGreeter = true;
+    settings.default_session.command =
+      "${pkgs.tuigreet}/bin/tuigreet --time --remember --cmd '${pkgs.xinit}/bin/startx ${config.services.displayManager.sessionData.wrapper}'";
+  };
+
   services.printing.enable = true;
 
   security = {
