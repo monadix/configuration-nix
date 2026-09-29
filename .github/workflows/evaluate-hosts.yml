@@ -15,6 +15,6 @@ jobs:
       - uses: DeterminateSystems/nix-installer-action@v19
       - name: Evaluate new host, Disko, and existing laptop
         run: |
-          nix eval --raw .#nixosConfigurations.carbom.config.system.build.toplevel.drvPath
-          nix eval --raw .#nixosConfigurations.carbom.config.system.build.diskoScript.drvPath
+          nix eval --raw .#nixosConfigurations.ugly-rod.config.system.build.toplevel.drvPath
+          nix eval --raw .#nixosConfigurations.ugly-rod.config.system.build.diskoScript.drvPath
           nix eval --raw .#nixosConfigurations.naumbuk.config.system.build.toplevel.drvPath
