@@ -96,10 +96,5 @@
     bluetooth.enable = true;
   };
 
-  zramSwap = {
-    enable = true;
-    algorithm = "zstd";
-  };
-
   virtualisation.docker.storageDriver = "btrfs";
 }

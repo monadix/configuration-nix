@@ -80,9 +80,4 @@
   };
 
   services.blueman.enable = true;
-
-  zramSwap = {
-    enable = true;
-    algorithm = "zstd";
-  };
 }

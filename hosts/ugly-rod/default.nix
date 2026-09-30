@@ -50,9 +50,4 @@
   services.blueman.enable = true;
   services.tlp.enable = true;
   services.fwupd.enable = true;
-
-  zramSwap = {
-    enable = true;
-    algorithm = "zstd";
-  };
 }
