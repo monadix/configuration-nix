@@ -43,6 +43,8 @@
 
     settings = {
       experimental-features = [ "nix-command" "flakes" ];
+      cores = 2;
+      max-jobs = 2;
       trusted-users = [ "root" "monadix" ];
 
       substituters = [
