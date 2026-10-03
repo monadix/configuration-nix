@@ -16,10 +16,12 @@
     loader = {
       grub = {
         enable = true;
-        efiSupport = true;
-        useOSProber = false;
-
         device = "nodev";
+        efiSupport = true;
+
+        useOSProber = false;
+        efiInstallAsRemovable = true;
+        copyKernels = false;
 
         extraGrubInstallArgs = [ "--disable-shim-lock" ];
 
@@ -27,7 +29,7 @@
       };
       
       efi = {
-        canTouchEfiVariables = true;
+        canTouchEfiVariables = false;
         efiSysMountPoint = "/boot/efi";
       };
     };
