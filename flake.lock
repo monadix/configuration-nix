@@ -94,11 +94,11 @@
         "telescope-orgmode": "telescope-orgmode"
       },
       "locked": {
-        "lastModified": 1791206556,
-        "narHash": "sha256-+cD0AazUOamnEYYysJO5trHth1Rocxz6d/8HZRxQBlo=",
+        "lastModified": 1791208082,
+        "narHash": "sha256-3DTj0tEmfeLA/U8b9RODRSo5eg5vw1cjlGebBYDqQ0E=",
         "owner": "monadix",
         "repo": "home-manager-config",
-        "rev": "c6b93ecd7cc8bb07182fb0053610170d6721f899",
+        "rev": "fb562c06e895fd2c64d220e43192870093497daa",
         "type": "github"
       },
       "original": {
