@@ -4,6 +4,15 @@
   ...
 }:
 {
+  nixpkgs.overlays = [
+    (_final: prev: {
+      strongswan = prev.strongswan.overrideAttrs (old: {
+        # The mdr-l2tp VPN requires IKEv1, disabled by default since strongSwan 6.1.
+        configureFlags = old.configureFlags ++ [ "--enable-ikev1" ];
+      });
+    })
+  ];
+
   networking = {
     nftables.enable = true;
 
