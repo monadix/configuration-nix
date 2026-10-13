@@ -53,9 +53,7 @@
             never-default = "true";
             ignore-auto-routes = "true";
             ignore-auto-dns = "false";
-            route1 = "172.16.0.100/32,,0";
-            route2 = "172.16.0.101/32,,0";
-            route3 = "172.16.20.0/24,,0";
+            route4 = "172.16.0.0/16,,0";
             dns = "172.16.0.101";
             dns-search = "internal.madrigal.ru";
           };
