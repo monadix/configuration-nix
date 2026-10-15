@@ -1,0 +1,112 @@
+# Local policy overrides the subscription; subscription rules follow these rules.
+mixed-port: 7897
+allow-lan: false
+bind-address: 127.0.0.1
+mode: rule
+log-level: info
+ipv6: true
+unified-delay: true
+tun:
+  enable: true
+  device: Mihomo
+  stack: gvisor
+  auto-route: true
+  auto-detect-interface: true
+  strict-route: false
+  dns-hijack:
+  - any:53
+  - tcp://any:53
+dns:
+  enable: true
+  use-hosts: true
+  enhanced-mode: fake-ip
+  fake-ip-range: 198.18.0.1/16
+  default-nameserver:
+  - 8.8.8.8
+  - 1.1.1.1
+  nameserver:
+  - 8.8.8.8
+  - 1.1.1.1
+  fake-ip-filter:
+  - '*.lan'
+  - stun.*.*.*
+  - stun.*.*
+  - time.windows.com
+  - time.nist.gov
+  - time.apple.com
+  - time.asia.apple.com
+  - '*.openwrt.pool.ntp.org'
+  - pool.ntp.org
+  - ntp.ubuntu.com
+  - time1.apple.com
+  - time2.apple.com
+  - time3.apple.com
+  - time4.apple.com
+  - time5.apple.com
+  - time6.apple.com
+  - time7.apple.com
+  - time1.google.com
+  - time2.google.com
+  - time3.google.com
+  - time4.google.com
+  - api.joox.com
+  - joox.com
+  - '*.xiami.com'
+  - '*.msftconnecttest.com'
+  - '*.msftncsi.com'
+  - +.xboxlive.com
+  - '*.*.stun.playstation.net'
+  - xbox.*.*.microsoft.com
+  - '*.ipv6.microsoft.com'
+  - speedtest.cros.wr.pvp.net
+  - +.internal.madrigal.ru
+  - +.lan
+  - +.local
+  ipv6: true
+  fake-ip-range6: fdfe:dcba:9876::1/64
+  nameserver-policy:
+    +.internal.madrigal.ru: 172.16.0.101#DIRECT
+  proxy-server-nameserver:
+  - 8.8.8.8
+  - 1.1.1.1
+proxy-groups:
+- name: RU-AUTO
+  type: url-test
+  include-all-proxies: true
+  filter: ^🇷🇺
+  url: https://www.gstatic.com/generate_204
+  interval: 300
+  lazy: true
+  tolerance: 50
+  empty-fallback: REJECT
+- name: FOREIGN-AUTO
+  type: url-test
+  include-all-proxies: true
+  filter: ^[🇦-🇿]{2}
+  exclude-filter: ^🇷🇺
+  url: https://www.gstatic.com/generate_204
+  interval: 300
+  lazy: true
+  tolerance: 50
+  empty-fallback: REJECT
+rules:
+- DOMAIN-SUFFIX,internal.madrigal.ru,DIRECT
+- DOMAIN,rnd.vpn.madrigal.ru,DIRECT
+- IP-CIDR,172.16.0.0/16,DIRECT,no-resolve
+- IP-CIDR,10.0.0.0/8,DIRECT,no-resolve
+- IP-CIDR,172.16.0.0/12,DIRECT,no-resolve
+- IP-CIDR,192.168.0.0/16,DIRECT,no-resolve
+- IP-CIDR,127.0.0.0/8,DIRECT,no-resolve
+- IP-CIDR6,fc00::/7,DIRECT,no-resolve
+- IP-CIDR6,fe80::/10,DIRECT,no-resolve
+- IP-CIDR6,::1/128,DIRECT,no-resolve
+- DOMAIN-SUFFIX,scan-edu.ru,RU-AUTO
+- DOMAIN-SUFFIX,umirhack-rnd.ru,RU-AUTO
+- DOMAIN-SUFFIX,pachca.com,RU-AUTO
+- DOMAIN-SUFFIX,vk.ru,RU-AUTO
+- DOMAIN-SUFFIX,bitrix24.ru,RU-AUTO
+- DOMAIN-SUFFIX,kontur.ru,RU-AUTO
+- DOMAIN-SUFFIX,kontur.host,RU-AUTO
+- DOMAIN-SUFFIX,ktalk.ru,RU-AUTO
+- DOMAIN-SUFFIX,wifilogin.ttk.ru,RU-AUTO
+- DOMAIN-SUFFIX,donstu.ru,RU-AUTO

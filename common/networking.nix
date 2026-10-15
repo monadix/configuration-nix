@@ -111,12 +111,5 @@
     "net.ipv6.conf.all.hop_limit" = 65;
   };
 
-  programs.clash-verge = {
-    enable = true;
-    package = pkgs.clash-verge-rev;
-    serviceMode = true;
-    tunMode = true;
-  };
-
   services.openssh.enable = true;
 }
