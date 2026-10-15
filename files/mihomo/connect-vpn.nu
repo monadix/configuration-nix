@@ -1,9 +1,9 @@
 def disconnect [] {
     do { ^nmcli --wait 10 connection down id mdr-l2tp } | complete | ignore
-    # NetworkManager can finish deactivation before the IPsec daemon exits.
+    # NetworkManager can finish deactivation before IPsec and PPP exit.
     let deadline = (date now) + 10sec
-    while (['/run/charon.pid', '/run/starter.charon.pid'] | any {|p| $p | path exists }) {
-        if (date now) > $deadline { error make {msg: 'Previous IPsec daemon did not stop'} }
+    while (['/run/charon.pid', '/run/starter.charon.pid', '/sys/class/net/mdr-vpn'] | any {|p| $p | path exists }) {
+        if (date now) > $deadline { error make {msg: 'Previous VPN did not stop'} }
         sleep 200ms
     }
 }

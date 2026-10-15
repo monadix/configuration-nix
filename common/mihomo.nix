@@ -3,7 +3,7 @@ let
   state = "/var/lib/mihomo-subscription";
   workProxy = { name = "WORK-VPN"; type = "direct"; }
     // lib.optionalAttrs (config.networking.hostName != "MDR024") {
-      interface-name = "ppp0";
+      interface-name = "mdr-vpn";
     };
   settings = pkgs.writeText "mihomo-settings.yaml" (
     builtins.readFile ../files/mihomo/config.yaml

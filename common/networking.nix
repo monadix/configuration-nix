@@ -62,6 +62,8 @@
             ipsec-gateway-id = "%any";
 
             password-flags = "0";
+            mtu = "1280";
+            mru = "1280";
             lcp-echo-interval = "10";
             lcp-echo-failure = "3";
           };
@@ -123,6 +125,9 @@
       ];
     };
   };
+
+  # The work VPN is the only PPP connection configured on these hosts.
+  environment.etc."ppp/options".text = "ifname mdr-vpn\n";
 
   # PPP/NetworkManager own the work routes; avoid IPsec gateway routes bypassing TUN.
   environment.etc."strongswan.conf".text = ''
