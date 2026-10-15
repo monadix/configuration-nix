@@ -1,6 +1,14 @@
 { config, lib, pkgs, ... }:
 let
   state = "/var/lib/mihomo-subscription";
+  workProxy = { name = "WORK-VPN"; type = "direct"; }
+    // lib.optionalAttrs (config.networking.hostName != "MDR024") {
+      interface-name = "ppp0";
+    };
+  settings = pkgs.writeText "mihomo-settings.yaml" (
+    builtins.readFile ../files/mihomo/config.yaml
+    + "\nproxies: ${builtins.toJSON [ workProxy ]}\n"
+  );
 in
 {
   sops.secrets.mihomo-subscription-url = {
@@ -20,6 +28,7 @@ in
       Restart = "on-failure";
       RestartSec = "5s";
       RuntimeDirectory = "mihomo";
+      RuntimeDirectoryMode = "0700";
       RestrictAddressFamilies = lib.mkForce "AF_INET AF_INET6 AF_NETLINK AF_UNIX";
     };
   };
@@ -36,7 +45,7 @@ in
       UMask = "0077";
       WorkingDirectory = state;
       LoadCredential = "url:${config.sops.secrets.mihomo-subscription-url.path}";
-      ExecStart = "${pkgs.nushell}/bin/nu --no-config-file ${../files/mihomo/update.nu} %d/url ${../files/mihomo/config.yaml}";
+      ExecStart = "${pkgs.nushell}/bin/nu --no-config-file ${../files/mihomo/update.nu} %d/url ${settings}";
     };
   };
 

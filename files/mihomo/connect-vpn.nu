@@ -1,5 +1,21 @@
+def disconnect [] {
+    do { ^nmcli --wait 10 connection down id mdr-l2tp } | complete | ignore
+    # NetworkManager can finish deactivation before the IPsec daemon exits.
+    let deadline = (date now) + 10sec
+    while (['/run/charon.pid', '/run/starter.charon.pid'] | any {|p| $p | path exists }) {
+        if (date now) > $deadline { error make {msg: 'Previous IPsec daemon did not stop'} }
+        sleep 200ms
+    }
+}
+
 def main [socket: path] {
     if (^nmcli -g GENERAL.STATE connection show id mdr-l2tp | str trim) == 'activated' { return }
+    # A running Mihomo process can still be initializing its control socket.
+    let deadline = (date now) + 30sec
+    while not ($socket | path exists) {
+        if (date now) > $deadline { error make {msg: 'Mihomo control socket did not become ready'} }
+        sleep 200ms
+    }
     let api = 'http://localhost'
     let proxies = http get --max-time 5sec --unix-socket $socket $'($api)/proxies' | get proxies
     let eligible = $proxies.VPN-UPLINK.all | where {|name| $name != 'DIRECT' and ($proxies | get $name | get udp) }
@@ -8,6 +24,7 @@ def main [socket: path] {
     let gateways = $dns.Answer | where type == 1 | get data
     let connected = try {
         mut success = false
+        disconnect
         for candidate in $candidates {
             http put --max-time 5sec --unix-socket $socket --content-type application/json $'($api)/proxies/VPN-UPLINK' {name: $candidate} | ignore
             for gateway in $gateways {
@@ -18,22 +35,24 @@ def main [socket: path] {
                 }
                 let change = do { ^nmcli connection modify --temporary id mdr-l2tp +vpn.data $'gateway=($gateway)' } | complete
                 if $change.exit_code != 0 { error make {msg: 'Cannot set VPN gateway'} }
+                print $'Trying work VPN using ($candidate) to ($gateway).'
                 let attempt = do { ^nmcli --wait 35 connection up id mdr-l2tp } | complete
                 if $attempt.exit_code == 0 {
                     print $'Work VPN connected using ($candidate).'
                     $success = true
                     break
                 }
-                do { ^nmcli --wait 10 connection down id mdr-l2tp } | complete | ignore
+                print --stderr $'VPN attempt to ($gateway) failed with nmcli exit code ($attempt.exit_code).'
+                disconnect
             }
             if $success { break }
         }
         $success
-    } catch { false }
+    } catch {|err| print --stderr $err.msg; false }
     # Restore declarative hostname; an active VPN retains its negotiated gateway.
     ^nmcli connection modify --temporary id mdr-l2tp +vpn.data 'gateway=rnd.vpn.madrigal.ru'
     if not $connected {
-        do { ^nmcli --wait 10 connection down id mdr-l2tp } | complete | ignore
+        disconnect
         http put --max-time 5sec --unix-socket $socket --content-type application/json $'($api)/proxies/VPN-UPLINK' {name: DIRECT} | ignore
         error make {msg: 'No direct or Russian proxy path established the work VPN'}
     }

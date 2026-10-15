@@ -71,7 +71,7 @@
           ipv4 = {
             method = "auto";
             never-default = "true";
-            auto-route-ext-gw = "false";
+            auto-route-ext-gw = 0;
             ignore-auto-routes = "true";
             ignore-auto-dns = "false";
             route4 = "172.16.0.0/16,,0";
@@ -130,7 +130,11 @@
       install_routes = no
     }
   '';
-  services.strongswan.enable = true;
+  # NetworkManager-L2TP owns charon; a standalone daemon conflicts with it.
+  systemd.tmpfiles.rules = [
+    "d /etc/ipsec.d 0700 root root -"
+    "d /etc/ppp 0700 root root -"
+  ];
 
   systemd.services.NetworkManager-dispatcher = lib.mkIf (config.networking.hostName != "MDR024") {
     requires = [ "NetworkManager-ensure-profiles.service" ];

@@ -38,6 +38,7 @@ def main [credential: path, settings: path] {
         | reject --optional external-controller external-controller-unix external-controller-tls external-ui external-ui-url secret authentication
         | merge $local
         | upsert profile (($subscription.profile? | default {}) | merge $local.profile)
+        | upsert proxies (($subscription.proxies? | default []) ++ $local.proxies)
         | upsert dns $dns
         | upsert proxy-groups ($groups ++ $local.proxy-groups)
         | upsert rules ($local.rules ++ $rules)

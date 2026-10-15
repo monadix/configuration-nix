@@ -71,11 +71,12 @@ dns:
   ipv6: true
   fake-ip-range6: fdfe:dcba:9876::1/64
   nameserver-policy:
-    +.internal.madrigal.ru: 172.16.0.101#DIRECT
+    +.internal.madrigal.ru: 172.16.0.101#WORK-VPN
     rnd.vpn.madrigal.ru: https://dns.google/dns-query#DIRECT
   proxy-server-nameserver:
   - 8.8.8.8
   - 1.1.1.1
+# WORK-VPN is supplied by the host's generated settings.
 proxy-groups:
 - name: VPN-UPLINK
   type: select
@@ -105,10 +106,10 @@ proxy-groups:
 rules:
 # Keep IKE and UDP-encapsulated ESP on one path during each VPN session.
 - AND,((NETWORK,udp),(OR,((DST-PORT,500),(DST-PORT,4500)))),VPN-UPLINK
-- DOMAIN-SUFFIX,internal.madrigal.ru,DIRECT
+- DOMAIN-SUFFIX,internal.madrigal.ru,WORK-VPN
 - DOMAIN,rnd.vpn.madrigal.ru,DIRECT
 - DOMAIN,wifilogin.ttk.ru,DIRECT
-- IP-CIDR,172.16.0.0/16,DIRECT,no-resolve
+- IP-CIDR,172.16.0.0/16,WORK-VPN,no-resolve
 - IP-CIDR,10.0.0.0/8,DIRECT,no-resolve
 - IP-CIDR,172.16.0.0/12,DIRECT,no-resolve
 - IP-CIDR,192.168.0.0/16,DIRECT,no-resolve
