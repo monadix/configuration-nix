@@ -1,5 +1,6 @@
 {
   config,
+  lib,
   pkgs,
   ...
 }:
@@ -22,6 +23,22 @@
       plugins = with pkgs; [
         networkmanager-l2tp
         networkmanager-strongswan
+      ];
+
+      # VPN profiles do not support autoconnect; start on uplink activation.
+      dispatcherScripts = lib.optionals (config.networking.hostName != "MDR024") [
+        {
+          source = pkgs.writeShellScript "mdr-l2tp-autoconnect" ''
+            [ "$2" = up ] || exit 0
+            export LC_ALL=C
+            nmcli=${config.networking.networkmanager.package}/bin/nmcli
+            [ "$("$nmcli" -g GENERAL.STATE connection show id mdr-l2tp)" = activated ] && exit 0
+            case "$("$nmcli" -g connection.type connection show uuid "$CONNECTION_UUID")" in
+              802-3-ethernet|802-11-wireless)
+                "$nmcli" --wait 0 connection up id mdr-l2tp ;;
+            esac
+          '';
+        }
       ];
 
       ensureProfiles = {
@@ -105,6 +122,11 @@
 
   environment.etc."strongswan.conf".text = '''';
   services.strongswan.enable = true;
+
+  systemd.services.NetworkManager-dispatcher = lib.mkIf (config.networking.hostName != "MDR024") {
+    requires = [ "NetworkManager-ensure-profiles.service" ];
+    after = [ "NetworkManager-ensure-profiles.service" ];
+  };
 
   boot.kernel.sysctl = {
     "net.ipv4.ip_default_ttl" = 65;
