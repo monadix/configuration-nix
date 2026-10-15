@@ -16,6 +16,8 @@ tun:
   dns-hijack:
   - any:53
   - tcp://any:53
+# Used as the DNS fallback when the subscription has no DNS block;
+# local work-domain DNS exceptions are also merged into upstream DNS.
 dns:
   enable: true
   use-hosts: true
@@ -70,51 +72,20 @@ dns:
   - 8.8.8.8
   - 1.1.1.1
 proxy-groups:
+# Flat URL tests include both LTE and non-LTE nodes.
 - name: RU-AUTO
-  type: fallback
-  proxies: [RU-NON-LTE, RU-LTE]
-  url: https://www.gstatic.com/generate_204
-  interval: 300
-  lazy: true
-- name: RU-NON-LTE
   type: url-test
   include-all-proxies: true
   filter: ^🇷🇺
-  exclude-filter: (?i)LTE
-  url: https://www.gstatic.com/generate_204
-  interval: 300
-  lazy: true
-  tolerance: 50
-  empty-fallback: REJECT
-- name: RU-LTE
-  type: url-test
-  include-all-proxies: true
-  filter: (?i)^🇷🇺.*LTE
   url: https://www.gstatic.com/generate_204
   interval: 300
   lazy: true
   tolerance: 50
   empty-fallback: REJECT
 - name: FOREIGN-AUTO
-  type: fallback
-  proxies: [FOREIGN-NON-LTE, FOREIGN-LTE]
-  url: https://www.gstatic.com/generate_204
-  interval: 300
-  lazy: true
-- name: FOREIGN-NON-LTE
   type: url-test
   include-all-proxies: true
   filter: ^[🇦-🇿]{2}
-  exclude-filter: (?i)^🇷🇺|LTE
-  url: https://www.gstatic.com/generate_204
-  interval: 300
-  lazy: true
-  tolerance: 50
-  empty-fallback: REJECT
-- name: FOREIGN-LTE
-  type: url-test
-  include-all-proxies: true
-  filter: (?i)^[🇦-🇿]{2}.*LTE
   exclude-filter: ^🇷🇺
   url: https://www.gstatic.com/generate_204
   interval: 300
