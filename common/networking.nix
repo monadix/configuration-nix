@@ -35,7 +35,7 @@
             [ "$("$nmcli" -g GENERAL.STATE connection show id mdr-l2tp)" = activated ] && exit 0
             case "$("$nmcli" -g connection.type connection show uuid "$CONNECTION_UUID")" in
               802-3-ethernet|802-11-wireless)
-                "$nmcli" --wait 0 connection up id mdr-l2tp ;;
+                ${pkgs.systemd}/bin/systemctl --no-block start mdr-l2tp-connect.service ;;
             esac
           '';
         }
@@ -57,10 +57,13 @@
             user = "$MDR_L2TP_USER";
 
             ipsec-enabled = "yes";
+            ipsec-forceencaps = "yes";
             ipsec-psk = "$MDR_L2TP_PSK";
             ipsec-gateway-id = "%any";
 
             password-flags = "0";
+            lcp-echo-interval = "10";
+            lcp-echo-failure = "3";
           };
 
           vpn-secrets.password = "$MDR_L2TP_PASS";
@@ -68,6 +71,7 @@
           ipv4 = {
             method = "auto";
             never-default = "true";
+            auto-route-ext-gw = "false";
             ignore-auto-routes = "true";
             ignore-auto-dns = "false";
             route4 = "172.16.0.0/16,,0";
@@ -120,12 +124,40 @@
     };
   };
 
-  environment.etc."strongswan.conf".text = '''';
+  # PPP/NetworkManager own the work routes; avoid IPsec gateway routes bypassing TUN.
+  environment.etc."strongswan.conf".text = ''
+    charon {
+      install_routes = no
+    }
+  '';
   services.strongswan.enable = true;
 
   systemd.services.NetworkManager-dispatcher = lib.mkIf (config.networking.hostName != "MDR024") {
     requires = [ "NetworkManager-ensure-profiles.service" ];
     after = [ "NetworkManager-ensure-profiles.service" ];
+  };
+
+  systemd.services.mdr-l2tp-connect = lib.mkIf (config.networking.hostName != "MDR024") {
+    after = [ "NetworkManager-ensure-profiles.service" "network-online.target" "mihomo.service" ];
+    requires = [ "NetworkManager-ensure-profiles.service" "mihomo.service" ];
+    wants = [ "network-online.target" ];
+    path = [ config.networking.networkmanager.package ];
+    environment.LC_ALL = "C";
+    serviceConfig = {
+      Type = "oneshot";
+      TimeoutStartSec = "45min";
+      ExecStart = "${pkgs.nushell}/bin/nu --no-config-file ${../files/mihomo/connect-vpn.nu} /run/mihomo/controller.sock";
+      # Also restore the hostname when systemd interrupts a connection attempt.
+      ExecStopPost = "-${config.networking.networkmanager.package}/bin/nmcli connection modify --temporary id mdr-l2tp +vpn.data gateway=rnd.vpn.madrigal.ru";
+    };
+  };
+
+  systemd.timers.mdr-l2tp-connect = lib.mkIf (config.networking.hostName != "MDR024") {
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnBootSec = "1min";
+      OnUnitInactiveSec = "1min";
+    };
   };
 
   boot.kernel.sysctl = {

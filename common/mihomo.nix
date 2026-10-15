@@ -1,11 +1,9 @@
-{ config, pkgs, ... }:
+{ config, lib, pkgs, ... }:
 let
   state = "/var/lib/mihomo-subscription";
 in
 {
   sops.secrets.mihomo-subscription-url = {
-    sopsFile = ../secrets/mihomo.yaml;
-    key = "subscription-url";
     restartUnits = [ "mihomo-subscription.service" ];
   };
 
@@ -18,6 +16,12 @@ in
   systemd.services.mihomo = {
     requires = [ "mihomo-subscription.service" ];
     after = [ "mihomo-subscription.service" ];
+    serviceConfig = {
+      Restart = "on-failure";
+      RestartSec = "5s";
+      RuntimeDirectory = "mihomo";
+      RestrictAddressFamilies = lib.mkForce "AF_INET AF_INET6 AF_NETLINK AF_UNIX";
+    };
   };
 
   systemd.services.mihomo-subscription = {

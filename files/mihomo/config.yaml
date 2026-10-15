@@ -6,6 +6,9 @@ mode: rule
 log-level: info
 ipv6: true
 unified-delay: true
+external-controller-unix: /run/mihomo/controller.sock
+profile:
+  store-selected: true
 tun:
   enable: true
   device: Mihomo
@@ -62,16 +65,23 @@ dns:
   - '*.ipv6.microsoft.com'
   - speedtest.cros.wr.pvp.net
   - +.internal.madrigal.ru
+  - rnd.vpn.madrigal.ru
   - +.lan
   - +.local
   ipv6: true
   fake-ip-range6: fdfe:dcba:9876::1/64
   nameserver-policy:
     +.internal.madrigal.ru: 172.16.0.101#DIRECT
+    rnd.vpn.madrigal.ru: https://dns.google/dns-query#DIRECT
   proxy-server-nameserver:
   - 8.8.8.8
   - 1.1.1.1
 proxy-groups:
+- name: VPN-UPLINK
+  type: select
+  proxies: [DIRECT]
+  include-all-proxies: true
+  filter: ^🇷🇺
 # Flat URL tests include both LTE and non-LTE nodes.
 - name: RU-AUTO
   type: url-test
@@ -93,8 +103,11 @@ proxy-groups:
   tolerance: 50
   empty-fallback: REJECT
 rules:
+# Keep IKE and UDP-encapsulated ESP on one path during each VPN session.
+- AND,((NETWORK,udp),(OR,((DST-PORT,500),(DST-PORT,4500)))),VPN-UPLINK
 - DOMAIN-SUFFIX,internal.madrigal.ru,DIRECT
 - DOMAIN,rnd.vpn.madrigal.ru,DIRECT
+- DOMAIN,wifilogin.ttk.ru,DIRECT
 - IP-CIDR,172.16.0.0/16,DIRECT,no-resolve
 - IP-CIDR,10.0.0.0/8,DIRECT,no-resolve
 - IP-CIDR,172.16.0.0/12,DIRECT,no-resolve
@@ -111,5 +124,4 @@ rules:
 - DOMAIN-SUFFIX,kontur.ru,RU-AUTO
 - DOMAIN-SUFFIX,kontur.host,RU-AUTO
 - DOMAIN-SUFFIX,ktalk.ru,RU-AUTO
-- DOMAIN-SUFFIX,wifilogin.ttk.ru,RU-AUTO
 - DOMAIN-SUFFIX,donstu.ru,RU-AUTO

@@ -16,26 +16,31 @@ def main [credential: path, settings: path] {
         let dns = match ($dns_with_policy.fake-ip-filter-mode? | default 'blacklist') {
             'rule' => (
                 $dns_with_policy | upsert fake-ip-filter (
-                    (['DOMAIN-SUFFIX,internal.madrigal.ru,real-ip'] ++ $filters) | uniq
+                    (['DOMAIN-SUFFIX,internal.madrigal.ru,real-ip', 'DOMAIN,rnd.vpn.madrigal.ru,real-ip'] ++ $filters) | uniq
                 )
             )
             'blacklist' => (
                 $dns_with_policy | upsert fake-ip-filter (
-                    ($filters ++ ['+.internal.madrigal.ru']) | uniq
+                    ($filters ++ ['+.internal.madrigal.ru', 'rnd.vpn.madrigal.ru']) | uniq
                 )
             )
-            _ => $dns_with_policy
+            _ => {
+                print --stderr 'Unsupported fake-ip-filter-mode; gateway real-IP exceptions cannot be guaranteed.'
+                error make {msg: 'Unsupported fake-ip-filter-mode'}
+            }
         }
         let groups = $subscription.proxy-groups | each {|group|
             if $group.name == 'Quattro VPN' {
                 {name: 'Quattro VPN', type: select, proxies: [FOREIGN-AUTO]}
             } else { $group }
         }
-        $subscription | merge $local
+        $subscription
+        | reject --optional external-controller external-controller-unix external-controller-tls external-ui external-ui-url secret authentication
+        | merge $local
+        | upsert profile (($subscription.profile? | default {}) | merge $local.profile)
         | upsert dns $dns
         | upsert proxy-groups ($groups ++ $local.proxy-groups)
         | upsert rules ($local.rules ++ $rules)
-        | reject --optional external-controller external-controller-unix external-controller-tls external-ui external-ui-url secret authentication
         | to yaml | save --force candidate.yaml
         let check = do { ^mihomo -t -d . -f candidate.yaml } | complete
         if $check.exit_code != 0 { error make {msg: 'Invalid Mihomo configuration'} }
@@ -43,12 +48,16 @@ def main [credential: path, settings: path] {
         rm --force candidate.yaml
         print --stderr 'Subscription update failed; keeping cached configuration.'
         if not ('config.yaml' | path exists) { exit 1 }
+        ^systemctl --no-block start mihomo.service
         return
     }
     if ('config.yaml' | path exists) and ((open --raw config.yaml) == (open --raw candidate.yaml)) {
         rm candidate.yaml
+        ^systemctl --no-block start mihomo.service
         return
     }
+    # Preserve the previous parse-valid config for manual recovery.
+    if ('config.yaml' | path exists) { cp --force config.yaml previous.yaml }
     mv --force candidate.yaml config.yaml
     ^systemctl --no-block restart mihomo.service
 }
