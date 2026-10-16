@@ -41,6 +41,10 @@
 
   services.fprintd.enable = true;
 
+  powerManagement.resumeCommands = ''
+    ${pkgs.systemd}/bin/systemctl --no-block try-restart fprintd.service
+  '';
+
   services.udev.extraRules = ''
     ACTION=="add", SUBSYSTEM=="backlight", \
       RUN+="${pkgs.coreutils}/bin/chgrp video /sys/class/backlight/%k/brightness", \
