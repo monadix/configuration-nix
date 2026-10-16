@@ -8,7 +8,7 @@ def disconnect [] {
     }
 }
 
-def main [socket: path] {
+def main [socket: path, office_bssids_file: path] {
     if (^nmcli -g GENERAL.STATE connection show id mdr-l2tp | str trim) == 'activated' { return }
     # A running Mihomo process can still be initializing its control socket.
     let deadline = (date now) + 30sec
@@ -19,7 +19,12 @@ def main [socket: path] {
     let api = 'http://localhost'
     let proxies = http get --max-time 5sec --unix-socket $socket $'($api)/proxies' | get proxies
     let eligible = $proxies.VPN-UPLINK.all | where {|name| $name != 'DIRECT' and ($proxies | get $name | get udp) }
-    let candidates = ['DIRECT'] ++ ($eligible | where $it !~ '(?i)LTE') ++ ($eligible | where $it =~ '(?i)LTE')
+    # Skip direct VPN transport on the office access points, including roaming.
+    let office_bssids = open --raw $office_bssids_file | lines
+    let wifi = (^nmcli --escape no -t -f ACTIVE,BSSID device wifi list --rescan no | lines)
+    let office_wifi = ($office_bssids | any {|bssid| $'yes:($bssid)' in $wifi })
+    let direct = if $office_wifi { [] } else { ['DIRECT'] }
+    let candidates = $direct ++ ($eligible | where $it !~ '(?i)LTE') ++ ($eligible | where $it =~ '(?i)LTE')
     let dns = http get --max-time 15sec --unix-socket $socket $'($api)/dns/query?name=rnd.vpn.madrigal.ru&type=A'
     let gateways = $dns.Answer | where type == 1 | get data
     let connected = try {
