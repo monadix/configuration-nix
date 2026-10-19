@@ -50,10 +50,12 @@
       substituters = [
         "https://mirror.yandex.ru/nixos"
         "https://cache.nixos.org/"
+        "https://luakit-hardened.cachix.org"
       ];
 
       trusted-public-keys = [
         "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
+        "luakit-hardened.cachix.org-1:x3DEaKNb//17n1vH+96ucQ7U9k6e5IuDogF22zZKEPI="
       ];
     };
   };
