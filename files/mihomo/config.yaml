@@ -119,6 +119,7 @@ rules:
 - IP-CIDR6,::1/128,DIRECT,no-resolve
 - DOMAIN-SUFFIX,scan-edu.ru,RU-AUTO
 - DOMAIN-SUFFIX,umirhack-rnd.ru,RU-AUTO
+- DOMAIN-SUFFIX,hack-rnd.ru,RU-AUTO
 - DOMAIN-SUFFIX,pachca.com,RU-AUTO
 - DOMAIN-SUFFIX,vk.ru,RU-AUTO
 - DOMAIN-SUFFIX,bitrix24.ru,RU-AUTO
