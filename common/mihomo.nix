@@ -49,6 +49,17 @@ in
     };
   };
 
+  systemd.services.mihomo-subscription-apply = {
+    description = "Apply changed Mihomo subscription settings";
+    wantedBy = [ "multi-user.target" ];
+    restartTriggers = [ settings ../files/mihomo/update.nu ];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+      ExecStart = "${pkgs.systemd}/bin/systemctl start mihomo-subscription.service";
+    };
+  };
+
   systemd.timers.mihomo-subscription = {
     wantedBy = [ "timers.target" ];
     timerConfig = {
