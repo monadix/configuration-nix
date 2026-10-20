@@ -2,7 +2,9 @@
 # stored subscription (or the applied config when no subscription is stored),
 # then start a fresh background scan. Stopping the scan unit first releases its
 # process group; the cache generation guard also makes any still-running stale
-# scan discard its commit.
+# scan discard its commit. The final request is a restart, not a start: a
+# concurrent subscription refresh can start a scan between the stop and this
+# point, and starting an active oneshot would otherwise lose the fresh scan.
 
 def main [
     state: path
@@ -51,9 +53,9 @@ def main [
         print --stderr 'Cache cleared, but rendering the latest configuration failed.'
         exit 1
     }
-    let started = (do { ^$systemctl --no-block start $location_unit } | complete)
-    if $started.exit_code != 0 {
-        print --stderr $'Could not schedule a fresh location scan: ($started.stderr | str trim)'
+    let restarted = (do { ^$systemctl --no-block restart $location_unit } | complete)
+    if $restarted.exit_code != 0 {
+        print --stderr $'Could not schedule a fresh location scan: ($restarted.stderr | str trim)'
         exit 1
     }
 }

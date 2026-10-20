@@ -1433,6 +1433,11 @@ def _parser() -> argparse.ArgumentParser:
     classify_command.add_argument("--cache", required=True)
     classify_command.add_argument("--json", action="store_true")
 
+    fingerprint_command = commands.add_parser(
+        "fingerprint", help="print the canonical node-identity fingerprint"
+    )
+    fingerprint_command.add_argument("--config", required=True)
+
     refresh_command = commands.add_parser(
         "refresh", help="probe stale nodes and commit the cache atomically"
     )
@@ -1465,6 +1470,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         if args.command == "classify":
             report = classify(args.config, args.cache)
             _emit(report, bool(args.json))
+        elif args.command == "fingerprint":
+            snapshot = load_config_snapshot(args.config)
+            print(snapshot.node_fingerprint)
         elif args.command == "refresh":
             report = refresh(
                 args.config,

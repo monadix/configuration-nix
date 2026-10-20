@@ -8,6 +8,7 @@ let
   updateScript = ../files/mihomo/update.nu;
   renderScript = ../files/mihomo/render.nu;
   cachedRenderScript = ../files/mihomo/cached-render.nu;
+  scheduleScript = ../files/mihomo/schedule-scan.nu;
   locationScript = ../files/mihomo/location-check.nu;
   resetScript = ../files/mihomo/reset-cache.nu;
   nu = "${pkgs.nushell}/bin/nu";
@@ -63,10 +64,8 @@ in
         nu "--no-config-file" updateScript
         "%d/url" settings renderScript cachedRenderScript
         "${python}/bin/python3" verifier
-        mihomo systemctl flock nu state
+        mihomo systemctl flock nu state scheduleScript locationUnit
       ];
-      # Start the scan in the background; subscription updates never wait for it.
-      ExecStartPost = "-${systemctl} --no-block start ${locationUnit}";
     };
   };
 
@@ -87,7 +86,7 @@ in
   systemd.services.mihomo-subscription-apply = {
     description = "Apply changed Mihomo subscription settings";
     wantedBy = [ "multi-user.target" ];
-    restartTriggers = [ settings updateScript renderScript cachedRenderScript verifier ];
+    restartTriggers = [ settings updateScript renderScript cachedRenderScript scheduleScript verifier ];
     serviceConfig = {
       Type = "oneshot";
       RemainAfterExit = true;
@@ -116,15 +115,6 @@ in
         mihomo "${pkgs.curl}/bin/curl" "${pkgs.iproute2}/bin/ip"
         systemctl flock nu
       ];
-    };
-  };
-
-  systemd.timers.mihomo-proxy-location-check = {
-    wantedBy = [ "timers.target" ];
-    timerConfig = {
-      OnBootSec = "2min";
-      OnUnitActiveSec = "1h";
-      Unit = locationUnit;
     };
   };
 

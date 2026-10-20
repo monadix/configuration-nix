@@ -10,6 +10,7 @@ import tempfile
 import textwrap
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
+from concurrent.futures import Future
 from io import StringIO
 from pathlib import Path
 from unittest import mock
@@ -1102,6 +1103,34 @@ class ProbeInfrastructureTests(unittest.TestCase):
         class Cancelled(KeyboardInterrupt):
             pass
 
+        class ControlledExecutor:
+            """Run only the first submitted probe; leave the rest queued."""
+
+            def __init__(self, max_workers):
+                self.max_workers = max_workers
+                self.futures = []
+                self.first = True
+                self.shutdown_args = None
+
+            def submit(self, function, *args, **kwargs):
+                future = Future()
+                self.futures.append(future)
+                if self.first:
+                    self.first = False
+                    try:
+                        function(*args, **kwargs)
+                    except BaseException as exc:
+                        future.set_exception(exc)
+                return future
+
+            def shutdown(self, *, wait=True, cancel_futures=False):
+                self.shutdown_args = (wait, cancel_futures)
+                if cancel_futures:
+                    for future in self.futures:
+                        future.cancel()
+
+        executor = ControlledExecutor(max_workers=1)
+
         def cancel_probe(candidate, proxy_url, **kwargs):
             captured.setdefault("cancel_event", kwargs.get("cancel_event"))
             events.append(("probe", candidate.name))
@@ -1109,12 +1138,19 @@ class ProbeInfrastructureTests(unittest.TestCase):
 
         with mock.patch.object(ev, "ProbeSession", FakeSession), mock.patch.object(
             ev, "probe_node", cancel_probe
-        ):
+        ), mock.patch.object(ev, "ThreadPoolExecutor", return_value=executor):
             with self.assertRaises(Cancelled):
                 ev.probe_nodes(candidates, "wlan0", workers=1)
-        self.assertEqual(len([event for event in events if isinstance(event, tuple)]), 1)
+
+        self.assertEqual(
+            [event for event in events if isinstance(event, tuple)],
+            [("probe", candidates[0].name)],
+        )
         self.assertEqual(events[-1], "close")
         self.assertTrue(captured["cancel_event"].is_set())
+        self.assertEqual(executor.shutdown_args, (False, True))
+        self.assertTrue(executor.futures[0].exception() is not None)
+        self.assertTrue(all(future.cancelled() for future in executor.futures[1:]))
 
     def test_probe_session_cleans_up_after_start_failure(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -1132,6 +1168,20 @@ class ProbeInfrastructureTests(unittest.TestCase):
 
 
 class CliTests(unittest.TestCase):
+    def test_fingerprint_prints_node_identity(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            config_path = Path(tmp) / "config.yaml"
+            node = proxy("🇩🇪 DE")
+            write_config(config_path, [node])
+            output = StringIO()
+            with redirect_stdout(output), redirect_stderr(StringIO()):
+                code = ev.main(["fingerprint", "--config", str(config_path)])
+            self.assertEqual(code, 0)
+            self.assertEqual(
+                output.getvalue().strip(),
+                ev.load_config_snapshot(str(config_path)).node_fingerprint,
+            )
+
     def test_classify_json_and_reset_summary(self):
         with tempfile.TemporaryDirectory() as tmp:
             config_path = Path(tmp) / "config.yaml"

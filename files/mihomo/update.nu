@@ -2,6 +2,23 @@
 # The download is deliberately outside the lock so a background location scan
 # never waits for a slow subscription endpoint.
 
+def node_fingerprint [config: path, python: path, verifier: path] {
+    if not ($config | path exists) { return null }
+    let result = (do { ^$python $verifier fingerprint --config $config } | complete)
+    if $result.exit_code != 0 { return null }
+    $result.stdout | str trim
+}
+
+def schedule_scan [schedule: path, nu_bin: path, systemctl: path, location_unit: string, changed: bool] {
+    let args = if $changed {
+        [$systemctl $location_unit '--changed']
+    } else {
+        [$systemctl $location_unit]
+    }
+    let result = (do { ^$nu_bin --no-config-file $schedule ...$args } | complete)
+    if not ($result.stderr | is-empty) { print --stderr $result.stderr }
+}
+
 def main [
     credential: path
     settings: path
@@ -14,12 +31,15 @@ def main [
     flock: path
     nu_bin: path
     state: path
+    schedule: path
+    location_unit: string
 ] {
     let lock = ($state | path join 'render.lock')
     let next = ($state | path join 'subscription.next.yaml')
     let stored = ($state | path join 'subscription.yaml')
     let cache = ($state | path join 'location-cache.json')
     let config = ($state | path join 'config.yaml')
+    let before_fingerprint = (node_fingerprint $config $python $verifier)
     try {
         let subscription = http get --raw --max-time 30sec --headers {User-Agent: mihomo} (open --raw $credential | str trim) | from yaml
         # Render from the new snapshot while holding the lock. render.nu
@@ -54,6 +74,12 @@ def main [
         if $started.exit_code != 0 {
             print --stderr $'Could not request mihomo start: ($started.stderr | str trim)'
         }
+        let after_fingerprint = (node_fingerprint $config $python $verifier)
+        let changed = ($before_fingerprint == null) or ($after_fingerprint == null) or ($before_fingerprint != $after_fingerprint)
+        schedule_scan $schedule $nu_bin $systemctl $location_unit $changed
         return
     }
+    let after_fingerprint = (node_fingerprint $config $python $verifier)
+    let changed = ($before_fingerprint == null) or ($after_fingerprint == null) or ($before_fingerprint != $after_fingerprint)
+    schedule_scan $schedule $nu_bin $systemctl $location_unit $changed
 }

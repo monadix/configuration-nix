@@ -4,6 +4,7 @@ import json
 import os
 import shutil
 import signal
+import stat
 import subprocess
 import sys
 import tempfile
@@ -26,6 +27,7 @@ FLOCK = os.environ.get("FLOCK_TEST_BIN") or shutil.which("flock")
 RENDER = MODULE_DIR / "render.nu"
 CACHED_RENDER = MODULE_DIR / "cached-render.nu"
 UPDATE = MODULE_DIR / "update.nu"
+SCHEDULE = MODULE_DIR / "schedule-scan.nu"
 RESET = MODULE_DIR / "reset-cache.nu"
 VERIFIER = MODULE_DIR / "exit_verifier.py"
 CONFIG = MODULE_DIR / "config.yaml"
@@ -144,6 +146,9 @@ class RenderIntegrationTests(unittest.TestCase):
         if MIHOMO is None:
             self.skipTest("mihomo is not available (set MIHOMO_TEST_BIN)")
         self.temporary = tempfile.TemporaryDirectory()
+        # Cleanup callbacks run in reverse order, so process groups registered
+        # by individual tests are terminated before their state is removed.
+        self.addCleanup(self.temporary.cleanup)
         self.state = Path(self.temporary.name)
         self.subscription = self.state / "subscription.yaml"
         self.subscription.write_text(
@@ -154,9 +159,6 @@ class RenderIntegrationTests(unittest.TestCase):
             yaml.safe_dump(local_settings(), allow_unicode=True, sort_keys=False)
         )
         self.cache = self.state / "location-cache.json"
-
-    def tearDown(self):
-        self.temporary.cleanup()
 
     def render(self) -> dict:
         result = subprocess.run(
@@ -181,19 +183,33 @@ class RenderIntegrationTests(unittest.TestCase):
         self.assertIn("candidate.yaml", result.stdout)
         return yaml.safe_load((self.state / "candidate.yaml").read_text())
 
-    def systemctl(self) -> tuple[Path, Path]:
+    def systemctl(self, *, active: bool = False) -> tuple[Path, Path]:
         log = self.state / "systemctl.log"
         stub = self.state / "systemctl"
         stub.write_text(
             f"#!{sys.executable}\n"
             "import pathlib, sys\n"
             f"pathlib.Path({str(log)!r}).open('a').write(' '.join(sys.argv[1:]) + '\\n')\n"
+            "if sys.argv[1:2] == ['is-active']:\n"
+            f"    print({'active' if active else 'inactive'!r})\n"
         )
         stub.chmod(0o755)
         return stub, log
 
-    def render_apply(self, systemctl: Path) -> None:
-        subprocess.run(
+    def schedule_scan(self, systemctl: Path, *, changed: bool):
+        command = [
+            NU,
+            "--no-config-file",
+            str(SCHEDULE),
+            str(systemctl),
+            "mihomo-proxy-location-check.service",
+        ]
+        if changed:
+            command.append("--changed")
+        return subprocess.run(command, capture_output=True, text=True, check=True)
+
+    def render_apply(self, systemctl: Path, *, check: bool = True):
+        return subprocess.run(
             [
                 NU,
                 "--no-config-file",
@@ -206,6 +222,31 @@ class RenderIntegrationTests(unittest.TestCase):
                 MIHOMO,
                 str(systemctl),
                 str(self.state),
+            ],
+            capture_output=True,
+            text=True,
+            check=check,
+        )
+
+    def cached_render_apply(self, systemctl: Path):
+        return subprocess.run(
+            [
+                FLOCK,
+                "--timeout",
+                "120",
+                str(self.state / "render.lock"),
+                NU,
+                "--no-config-file",
+                str(CACHED_RENDER),
+                str(self.state),
+                str(self.settings),
+                str(self.cache),
+                sys.executable,
+                str(VERIFIER),
+                str(RENDER),
+                MIHOMO,
+                str(systemctl),
+                NU,
             ],
             capture_output=True,
             text=True,
@@ -303,6 +344,8 @@ class RenderIntegrationTests(unittest.TestCase):
                     FLOCK,
                     NU,
                     str(self.state),
+                    str(SCHEDULE),
+                    "mihomo-proxy-location-check.service",
                 ],
                 capture_output=True,
                 text=True,
@@ -331,6 +374,362 @@ class RenderIntegrationTests(unittest.TestCase):
         self.render_apply(systemctl)
 
         self.assertEqual(systemctl_log.read_text(), "")
+        self.assertFalse((self.state / "pending-application").exists())
+
+    def test_schedule_starts_idle_and_only_replaces_changed_active_scan(self):
+        if NU is None:
+            self.skipTest("nushell is not available")
+        unit = "mihomo-proxy-location-check.service"
+        for changed, active, expected in (
+            (False, False, [f"--no-block start {unit}"]),
+            (False, True, []),
+            (True, False, [f"--no-block restart {unit}"]),
+            (True, True, [f"--no-block restart {unit}"]),
+        ):
+            with self.subTest(changed=changed, active=active):
+                systemctl, systemctl_log = self.systemctl(active=active)
+                systemctl_log.write_text("")
+                self.schedule_scan(systemctl, changed=changed)
+                lines = systemctl_log.read_text().splitlines()
+                self.assertEqual(lines[0], f"is-active {unit}")
+                self.assertEqual(lines[1:], expected)
+
+    def test_unchanged_update_while_scan_is_active_does_not_restart_scan(self):
+        if FLOCK is None:
+            self.skipTest("flock is not available")
+        self.populate_cache()
+        initial, _ = self.systemctl()
+        self.render_apply(initial)
+        server_root = self.state / "server"
+        server_root.mkdir()
+        (server_root / "sub.yaml").write_text(
+            yaml.safe_dump(SUBSCRIPTION, allow_unicode=True, sort_keys=False)
+        )
+
+        class QuietHandler(SimpleHTTPRequestHandler):
+            def __init__(self, *args, **kwargs):
+                super().__init__(*args, directory=str(server_root), **kwargs)
+
+            def log_message(self, *args):
+                pass
+
+        server = ThreadingHTTPServer(("127.0.0.1", 0), QuietHandler)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        try:
+            credential = self.state / "credential"
+            credential.write_text(
+                f"http://127.0.0.1:{server.server_port}/sub.yaml\n"
+            )
+            systemctl, systemctl_log = self.systemctl(active=True)
+            systemctl_log.write_text("")
+            result = self.run_update(credential, systemctl)
+        finally:
+            server.shutdown()
+            server.server_close()
+            thread.join()
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(
+            systemctl_log.read_text().splitlines(),
+            ["is-active mihomo-proxy-location-check.service"],
+        )
+
+    def test_rules_only_update_does_not_replace_active_scan(self):
+        if FLOCK is None:
+            self.skipTest("flock is not available")
+        self.populate_cache()
+        initial, _ = self.systemctl()
+        self.render_apply(initial)
+        changed_subscription = json.loads(json.dumps(SUBSCRIPTION))
+        changed_subscription["rules"].insert(0, "DOMAIN-SUFFIX,new.example,DIRECT")
+        server_root = self.state / "server"
+        server_root.mkdir()
+        (server_root / "sub.yaml").write_text(
+            yaml.safe_dump(changed_subscription, allow_unicode=True, sort_keys=False)
+        )
+
+        class QuietHandler(SimpleHTTPRequestHandler):
+            def __init__(self, *args, **kwargs):
+                super().__init__(*args, directory=str(server_root), **kwargs)
+
+            def log_message(self, *args):
+                pass
+
+        server = ThreadingHTTPServer(("127.0.0.1", 0), QuietHandler)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        try:
+            credential = self.state / "credential"
+            credential.write_text(
+                f"http://127.0.0.1:{server.server_port}/sub.yaml\n"
+            )
+            systemctl, systemctl_log = self.systemctl(active=True)
+            systemctl_log.write_text("")
+            result = self.run_update(credential, systemctl)
+        finally:
+            server.shutdown()
+            server.server_close()
+            thread.join()
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        log = systemctl_log.read_text().splitlines()
+        self.assertIn("is-active mihomo-proxy-location-check.service", log)
+        self.assertIn("--no-block try-restart mihomo.service", log)
+        self.assertFalse(
+            any(
+                "mihomo-proxy-location-check.service" in line
+                and "is-active" not in line
+                for line in log
+            ),
+            log,
+        )
+
+    def test_node_identity_change_while_scan_is_active_replaces_scan(self):
+        if FLOCK is None:
+            self.skipTest("flock is not available")
+        self.populate_cache()
+        initial, _ = self.systemctl()
+        self.render_apply(initial)
+        changed_subscription = json.loads(json.dumps(SUBSCRIPTION))
+        changed_subscription["proxies"].append(
+            {"name": "🇸🇪 SE New", "type": "socks5", "server": "192.0.2.16", "port": 1080}
+        )
+        server_root = self.state / "server"
+        server_root.mkdir()
+        (server_root / "sub.yaml").write_text(
+            yaml.safe_dump(changed_subscription, allow_unicode=True, sort_keys=False)
+        )
+
+        class QuietHandler(SimpleHTTPRequestHandler):
+            def __init__(self, *args, **kwargs):
+                super().__init__(*args, directory=str(server_root), **kwargs)
+
+            def log_message(self, *args):
+                pass
+
+        server = ThreadingHTTPServer(("127.0.0.1", 0), QuietHandler)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        try:
+            credential = self.state / "credential"
+            credential.write_text(
+                f"http://127.0.0.1:{server.server_port}/sub.yaml\n"
+            )
+            systemctl, systemctl_log = self.systemctl(active=True)
+            systemctl_log.write_text("")
+            result = self.run_update(credential, systemctl)
+        finally:
+            server.shutdown()
+            server.server_close()
+            thread.join()
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn(
+            "--no-block restart mihomo-proxy-location-check.service",
+            systemctl_log.read_text().splitlines(),
+        )
+
+    def test_failed_update_while_scan_is_active_does_not_restart_scan(self):
+        if FLOCK is None:
+            self.skipTest("flock is not available")
+        self.populate_cache()
+        initial, _ = self.systemctl()
+        self.render_apply(initial)
+        credential = self.state / "credential"
+        credential.write_text("http://127.0.0.1:1/sub.yaml\n")
+        systemctl, systemctl_log = self.systemctl(active=True)
+        systemctl_log.write_text("")
+        result = self.run_update(credential, systemctl)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("Subscription update failed", result.stderr)
+        log = systemctl_log.read_text().splitlines()
+        self.assertIn("--no-block start mihomo.service", log)
+        self.assertIn("is-active mihomo-proxy-location-check.service", log)
+        self.assertFalse(
+            any(
+                "mihomo-proxy-location-check.service" in line
+                and "is-active" not in line
+                for line in log
+            ),
+            log,
+        )
+
+    def wait_for_file(self, path: Path, description: str, timeout: float = 10):
+        deadline = time.time() + timeout
+        while not path.exists() and time.time() < deadline:
+            time.sleep(0.02)
+        self.assertTrue(path.exists(), description)
+
+    def terminate_group(self, process: subprocess.Popen):
+        try:
+            # Every caller starts a new session; its group ID remains the
+            # original PID even if the leader exits before its children.
+            os.killpg(process.pid, signal.SIGTERM)
+        except ProcessLookupError:
+            pass
+        try:
+            process.communicate(timeout=10)
+        except subprocess.TimeoutExpired:
+            try:
+                os.killpg(process.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            process.communicate(timeout=10)
+
+    def test_interrupted_after_install_reapplies_on_unchanged_render(self):
+        if FLOCK is None:
+            self.skipTest("flock is not available")
+        self.populate_cache()
+        started = self.state / "dispatch-started"
+        release = self.state / "dispatch-release"
+        systemctl_log = self.state / "systemctl.log"
+        blocking = self.state / "systemctl"
+        blocking.write_text(
+            f"#!{sys.executable}\n"
+            "import pathlib, sys, time\n"
+            f"pathlib.Path({str(systemctl_log)!r}).open('a').write(' '.join(sys.argv[1:]) + '\\n')\n"
+            "if 'try-restart' in sys.argv:\n"
+            f"    pathlib.Path({str(started)!r}).write_text('')\n"
+            f"    while not pathlib.Path({str(release)!r}).exists(): time.sleep(0.02)\n"
+        )
+        blocking.chmod(0o755)
+        process = subprocess.Popen(
+            [
+                NU,
+                "--no-config-file",
+                str(RENDER),
+                str(self.subscription),
+                str(self.settings),
+                str(self.cache),
+                sys.executable,
+                str(VERIFIER),
+                MIHOMO,
+                str(blocking),
+                str(self.state),
+            ],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            start_new_session=True,
+        )
+        self.addCleanup(self.terminate_group, process)
+        self.wait_for_file(started, "renderer did not reach the restart request")
+        pending = self.state / "pending-application"
+        self.assertTrue((self.state / "config.yaml").exists())
+        self.assertTrue(pending.exists())
+        self.assertEqual(stat.S_IMODE(pending.stat().st_mode), 0o600)
+        self.terminate_group(process)
+        self.assertTrue(pending.exists())
+
+        success, recovery_log = self.systemctl()
+        result = self.cached_render_apply(success)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("try-restart mihomo.service", recovery_log.read_text())
+        self.assertFalse(pending.exists())
+
+        recovery_log.write_text("")
+        self.render_apply(success)
+        self.assertEqual(recovery_log.read_text(), "")
+
+    def test_interrupted_before_install_keeps_marker_and_recovers(self):
+        if FLOCK is None:
+            self.skipTest("flock is not available")
+        self.populate_cache()
+        wrapper_dir = self.state / "bin"
+        wrapper_dir.mkdir()
+        paused = self.state / "install-paused"
+        release = self.state / "install-release"
+        real_mv = shutil.which("mv")
+        wrapper = wrapper_dir / "mv"
+        wrapper.write_text(
+            "#!/bin/sh\n"
+            'last=""\n'
+            'for arg in "$@"; do last="$arg"; done\n'
+            'case "$last" in\n'
+            "  */config.yaml)\n"
+            '    : > "$MV_PAUSED"\n'
+            '    while [ ! -e "$MV_RELEASE" ]; do sleep 0.05; done\n'
+            "    ;;\n"
+            "esac\n"
+            f'exec {real_mv} "$@"\n'
+        )
+        wrapper.chmod(0o755)
+        environment = os.environ.copy()
+        environment.update(
+            {
+                "PATH": f"{wrapper_dir}:{environment['PATH']}",
+                "MV_PAUSED": str(paused),
+                "MV_RELEASE": str(release),
+            }
+        )
+        systemctl, systemctl_log = self.systemctl()
+        process = subprocess.Popen(
+            [
+                NU,
+                "--no-config-file",
+                str(RENDER),
+                str(self.subscription),
+                str(self.settings),
+                str(self.cache),
+                sys.executable,
+                str(VERIFIER),
+                MIHOMO,
+                str(systemctl),
+                str(self.state),
+            ],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            start_new_session=True,
+            env=environment,
+        )
+        self.addCleanup(self.terminate_group, process)
+        self.wait_for_file(paused, "renderer did not pause before installation")
+        pending = self.state / "pending-application"
+        self.assertFalse((self.state / "config.yaml").exists())
+        self.assertTrue(pending.exists())
+        self.terminate_group(process)
+        release.write_text("")
+        self.assertTrue(pending.exists())
+        self.assertFalse((self.state / "config.yaml").exists())
+
+        result = self.render_apply(systemctl)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertTrue((self.state / "config.yaml").exists())
+        self.assertFalse(pending.exists())
+        self.assertIn("try-restart mihomo.service", systemctl_log.read_text())
+
+    def test_failed_application_request_retries_until_dispatched(self):
+        if FLOCK is None:
+            self.skipTest("flock is not available")
+        self.populate_cache()
+        failing = self.state / "systemctl-fail"
+        failing.write_text(
+            f"#!{sys.executable}\n"
+            "import sys\n"
+            "if 'try-restart' in sys.argv:\n"
+            "    print('lifecycle unavailable', file=sys.stderr)\n"
+            "    sys.exit(1)\n"
+        )
+        failing.chmod(0o755)
+        failed = self.render_apply(failing, check=False)
+        self.assertEqual(failed.returncode, 0, failed.stderr)
+        self.assertIn("Could not request mihomo restart", failed.stderr)
+        pending = self.state / "pending-application"
+        self.assertTrue((self.state / "config.yaml").exists())
+        self.assertTrue(pending.exists())
+        self.assertEqual(stat.S_IMODE(pending.stat().st_mode), 0o600)
+
+        success, success_log = self.systemctl()
+        result = self.render_apply(success)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("try-restart mihomo.service", success_log.read_text())
+        self.assertFalse(pending.exists())
+
+        success_log.write_text("")
+        self.render_apply(success)
+        self.assertEqual(success_log.read_text(), "")
 
     def test_unchanged_update_refetches_without_main_lifecycle(self):
         if FLOCK is None:
@@ -375,7 +774,13 @@ class RenderIntegrationTests(unittest.TestCase):
 
         self.assertEqual(second.returncode, 0, second.stderr)
         self.assertEqual(request_log.read_text(), "fetch\n")
-        self.assertEqual(systemctl_log.read_text(), "")
+        self.assertEqual(
+            systemctl_log.read_text().splitlines(),
+            [
+                "is-active mihomo-proxy-location-check.service",
+                "--no-block start mihomo-proxy-location-check.service",
+            ],
+        )
 
     def test_reset_clears_cache_and_renders_reject(self):
         if FLOCK is None:
@@ -418,7 +823,7 @@ class RenderIntegrationTests(unittest.TestCase):
         log = systemctl_log.read_text()
         self.assertIn("stop mihomo-proxy-location-check.service", log)
         self.assertIn(
-            "--no-block start mihomo-proxy-location-check.service", log
+            "--no-block restart mihomo-proxy-location-check.service", log
         )
 
     def test_blocked_scan_does_not_keep_expired_approvals(self):
@@ -471,14 +876,14 @@ class RenderIntegrationTests(unittest.TestCase):
             text=True,
             start_new_session=True,
         )
+        self.addCleanup(self.terminate_group, process)
         try:
             deadline = time.time() + 10
             while not marker.exists() and time.time() < deadline:
                 time.sleep(0.05)
             self.assertTrue(marker.exists(), "scan did not start")
         finally:
-            os.killpg(os.getpgid(process.pid), signal.SIGTERM)
-            process.communicate(timeout=10)
+            self.terminate_group(process)
         rendered = yaml.safe_load((self.state / "config.yaml").read_text())
         groups = {group["name"]: group for group in rendered["proxy-groups"]}
         self.assertEqual(groups["RU-AUTO"]["proxies"], ["REJECT"])
@@ -516,6 +921,8 @@ class RenderIntegrationTests(unittest.TestCase):
                 FLOCK,
                 NU,
                 str(self.state),
+                str(SCHEDULE),
+                "mihomo-proxy-location-check.service",
             ],
             capture_output=True,
             text=True,
@@ -570,7 +977,7 @@ class RenderIntegrationTests(unittest.TestCase):
         self.assertNotIn("start mihomo-subscription.service", log)
         self.assertIn("stop mihomo-proxy-location-check.service", log)
         self.assertIn(
-            "--no-block start mihomo-proxy-location-check.service", log
+            "--no-block restart mihomo-proxy-location-check.service", log
         )
 
     def test_reset_falls_back_to_applied_config_when_subscription_unreadable(self):
@@ -714,6 +1121,8 @@ class RenderIntegrationTests(unittest.TestCase):
                 FLOCK,
                 NU,
                 str(self.state),
+                str(SCHEDULE),
+                "mihomo-proxy-location-check.service",
             ],
             capture_output=True,
             text=True,

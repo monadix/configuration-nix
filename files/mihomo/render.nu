@@ -19,6 +19,24 @@ def verified-group [groups: list, name: string, members: list] {
     }
 }
 
+def write_pending_application [path: path, temporary: path] {
+    # Private atomic marker: the configuration replacement and its lifecycle
+    # request form a critical section that cancellation must be able to resume.
+    "pending mihomo application\n" | save --force $temporary
+    ^chmod 600 $temporary
+    ^mv --force $temporary $path
+}
+
+def dispatch_application [systemctl: path, pending: path] {
+    let restarted = (do { ^$systemctl --no-block try-restart mihomo.service } | complete)
+    if $restarted.exit_code != 0 {
+        # Keep the marker so the next render retries the application request.
+        print --stderr $'Could not request mihomo restart: ($restarted.stderr | str trim)'
+    } else {
+        rm --force $pending
+    }
+}
+
 def main [
     subscription: path
     settings: path
@@ -41,6 +59,8 @@ def main [
     let candidate_path = ($state | path join 'candidate.yaml')
     let config_path = ($state | path join 'config.yaml')
     let previous_path = ($state | path join 'previous.yaml')
+    let pending_path = ($state | path join 'pending-application')
+    let pending_temporary = ($state | path join '.pending-application.tmp')
 
     # Keep the subscription's DIRECT decisions unchanged.
     let rules = ($subscription_doc.rules? | default [] | each {|rule|
@@ -128,21 +148,28 @@ def main [
         if not $changed {
             rm --force $candidate_path
             rm --force $base_path
-            # No-op render: an active mihomo keeps its process, and starting or
-            # restarting it here would re-enter the subscription/scan lifecycle.
+            # An earlier render may have installed the current bytes and been
+            # cancelled before its restart request. Retry that application;
+            # otherwise this remains a true no-op.
+            if ($pending_path | path exists) {
+                dispatch_application $systemctl $pending_path
+            }
             return
         }
+        # Mark the application as outstanding before replacing the file so a
+        # cancellation between installation and dispatch cannot lose it. The
+        # marker names no snapshot, so a retry always applies the current
+        # configuration rather than restoring an older target.
+        write_pending_application $pending_path $pending_temporary
         # Preserve the previous parse-valid config for manual recovery.
         if ($config_path | path exists) { cp --force $config_path $previous_path }
-        mv --force $candidate_path $config_path
+        ^mv --force $candidate_path $config_path
         rm --force $base_path
-        let restarted = (do { ^$systemctl --no-block try-restart mihomo.service } | complete)
-        if $restarted.exit_code != 0 {
-            print --stderr $'Could not request mihomo restart: ($restarted.stderr | str trim)'
-        }
+        dispatch_application $systemctl $pending_path
     } catch {|err|
         rm --force $candidate_path
         rm --force $base_path
+        rm --force $pending_temporary
         error make {msg: $err.msg}
     }
 }
