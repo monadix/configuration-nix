@@ -1,6 +1,7 @@
 { config, lib, pkgs, ... }:
 let
   state = "/var/lib/mihomo-subscription";
+  prepareUnit = "mihomo-subscription-prepare.service";
   locationUnit = "mihomo-proxy-location-check.service";
   python = pkgs.python3.withPackages (ps: [ ps.pyyaml ]);
   verifier = ../files/mihomo/exit_verifier.py;
@@ -34,8 +35,10 @@ in
   };
 
   systemd.services.mihomo = {
-    requires = [ "mihomo-subscription.service" ];
-    after = [ "mihomo-subscription.service" ];
+    # Starting mihomo must not start the recurring updater: its ExecStartPost
+    # schedules a location scan, and the scan's render can restart mihomo.
+    requires = [ prepareUnit ];
+    after = [ prepareUnit ];
     serviceConfig = {
       Restart = "on-failure";
       RestartSec = "5s";
@@ -64,6 +67,20 @@ in
       ];
       # Start the scan in the background; subscription updates never wait for it.
       ExecStartPost = "-${systemctl} --no-block start ${locationUnit}";
+    };
+  };
+
+  # Cold boot without a cached config still needs one subscription fetch before
+  # mihomo starts. When config.yaml exists this preparation is a no-op, so
+  # restarting mihomo works offline and never refreshes the subscription.
+  systemd.services.mihomo-subscription-prepare = {
+    description = "Prepare the initial Mihomo subscription configuration when absent";
+    wants = [ "network-online.target" ];
+    after = [ "network-online.target" ];
+    unitConfig.ConditionPathExists = "!${state}/config.yaml";
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = "${systemctl} start mihomo-subscription.service";
     };
   };
 

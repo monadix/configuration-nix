@@ -5,6 +5,17 @@
 `config.yaml` from that stored snapshot. Rendering uses only the cached exit
 classification, so subscription startup never waits for network probes.
 
+`mihomo.service` depends on `mihomo-subscription-prepare.service`, not on the
+recurring updater. The prepare unit fetches only when `config.yaml` is absent,
+so a cold boot still gets an initial configuration while a cached boot starts
+mihomo offline. Restarting mihomo therefore cannot fetch the subscription or
+schedule a location scan. The hourly updater timer, the deployment apply unit,
+and explicit updater starts are the only refresh triggers. An unchanged render
+leaves the running process untouched; only a changed configuration requests a
+`try-restart`. The prepare unit runs the updater only while mihomo waits for
+it, and changed rendering uses `try-restart`, so bootstrap cannot restart
+mihomo recursively.
+
 `mihomo-proxy-location-check.service` runs in the background. It renders the
 cached classifications before probing so expired approvals are revoked even if
 the scan is later terminated, probes stale nodes into
@@ -65,3 +76,9 @@ The renderer integration tests execute Nushell against offline fixtures and
 run `mihomo -t`. They skip when `nu` or `mihomo` is unavailable; set
 `NU_TEST_BIN`, `MIHOMO_TEST_BIN`, and `FLOCK_TEST_BIN` to run them from a
 development shell.
+
+The service-lifecycle regression runs uniquely named runtime units linked into
+the user systemd manager and removes them afterwards. It verifies that repeated
+mihomo restarts do not fetch or scan, explicit updater runs do both, and
+cold/cached boots complete without a startup dependency deadlock. It skips
+when no user systemd manager is available.

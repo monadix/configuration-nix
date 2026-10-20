@@ -128,10 +128,8 @@ def main [
         if not $changed {
             rm --force $candidate_path
             rm --force $base_path
-            let started = (do { ^$systemctl --no-block start mihomo.service } | complete)
-            if $started.exit_code != 0 {
-                print --stderr $'Could not request mihomo start: ($started.stderr | str trim)'
-            }
+            # No-op render: an active mihomo keeps its process, and starting or
+            # restarting it here would re-enter the subscription/scan lifecycle.
             return
         }
         # Preserve the previous parse-valid config for manual recovery.

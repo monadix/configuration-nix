@@ -319,6 +319,64 @@ class RenderIntegrationTests(unittest.TestCase):
         self.assertEqual(groups["RU-AUTO"]["proxies"], ["REJECT"])
         self.assertIn("try-restart mihomo.service", systemctl_log.read_text())
 
+    def test_unchanged_render_does_not_request_main_lifecycle(self):
+        if FLOCK is None:
+            self.skipTest("flock is not available")
+        self.populate_cache()
+        systemctl, systemctl_log = self.systemctl()
+        self.render_apply(systemctl)
+        self.assertIn("try-restart mihomo.service", systemctl_log.read_text())
+        systemctl_log.write_text("")
+
+        self.render_apply(systemctl)
+
+        self.assertEqual(systemctl_log.read_text(), "")
+
+    def test_unchanged_update_refetches_without_main_lifecycle(self):
+        if FLOCK is None:
+            self.skipTest("flock is not available")
+        server_root = self.state / "server"
+        server_root.mkdir()
+        (server_root / "sub.yaml").write_text(
+            yaml.safe_dump(SUBSCRIPTION, allow_unicode=True, sort_keys=False)
+        )
+        request_log = self.state / "requests"
+
+        class CountingHandler(SimpleHTTPRequestHandler):
+            def __init__(self, *args, **kwargs):
+                super().__init__(*args, directory=str(server_root), **kwargs)
+
+            def log_message(self, *args):
+                pass
+
+            def do_GET(self):
+                with request_log.open("a") as log:
+                    log.write("fetch\n")
+                super().do_GET()
+
+        server = ThreadingHTTPServer(("127.0.0.1", 0), CountingHandler)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        try:
+            credential = self.state / "credential"
+            credential.write_text(f"http://127.0.0.1:{server.server_port}/sub.yaml\n")
+            systemctl, systemctl_log = self.systemctl()
+            first = self.run_update(credential, systemctl)
+            self.assertEqual(first.returncode, 0, first.stderr)
+            self.assertIn("try-restart mihomo.service", systemctl_log.read_text())
+            systemctl_log.write_text("")
+            request_log.write_text("")
+
+            second = self.run_update(credential, systemctl)
+        finally:
+            server.shutdown()
+            server.server_close()
+            thread.join()
+
+        self.assertEqual(second.returncode, 0, second.stderr)
+        self.assertEqual(request_log.read_text(), "fetch\n")
+        self.assertEqual(systemctl_log.read_text(), "")
+
     def test_reset_clears_cache_and_renders_reject(self):
         if FLOCK is None:
             self.skipTest("flock is not available")
