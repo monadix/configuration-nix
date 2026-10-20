@@ -83,11 +83,11 @@ proxy-groups:
   proxies: [DIRECT]
   include-all-proxies: true
   filter: ^🇷🇺
-# Flat URL tests include both LTE and non-LTE nodes.
+# Membership is rendered from verified exit locations; [REJECT] is the
+# fail-closed state until the first background scan completes.
 - name: RU-AUTO
   type: url-test
-  include-all-proxies: true
-  filter: ^🇷🇺
+  proxies: [REJECT]
   url: https://www.gstatic.com/generate_204
   interval: 300
   lazy: true
@@ -95,9 +95,7 @@ proxy-groups:
   empty-fallback: REJECT
 - name: FOREIGN-AUTO
   type: url-test
-  include-all-proxies: true
-  filter: ^[🇦-🇿]{2}
-  exclude-filter: ^🇷🇺
+  proxies: [REJECT]
   url: https://www.gstatic.com/generate_204
   interval: 300
   lazy: true
