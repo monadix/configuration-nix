@@ -67,7 +67,7 @@ def main [
         $rule | str replace --regex ',\s*Quattro VPN\s*$' ',FOREIGN-AUTO'
     })
     # Prefer subscription DNS; retain local fallback when it is absent.
-    # Preserve provider filters, adding the work resolver and real-IP exception.
+    # Preserve provider filters, adding the work resolver and VPN real-IP exceptions.
     let upstream_dns = ($subscription_doc.dns? | default $local.dns)
     let work_policy = ($local.dns.nameserver-policy? | default {})
     let upstream_policy = ($upstream_dns.nameserver-policy? | default {})
@@ -76,12 +76,12 @@ def main [
     let dns = match ($dns_with_policy.fake-ip-filter-mode? | default 'blacklist') {
         'rule' => (
             $dns_with_policy | upsert fake-ip-filter (
-                (['DOMAIN-SUFFIX,internal.madrigal.ru,real-ip', 'DOMAIN,rnd.vpn.madrigal.ru,real-ip'] ++ $filters) | uniq
+                (['DOMAIN-SUFFIX,internal.madrigal.ru,real-ip', 'DOMAIN,rnd.vpn.madrigal.ru,real-ip', 'DOMAIN,ams.server.lena727.ru,real-ip'] ++ $filters) | uniq
             )
         )
         'blacklist' => (
             $dns_with_policy | upsert fake-ip-filter (
-                ($filters ++ ['+.internal.madrigal.ru', 'rnd.vpn.madrigal.ru']) | uniq
+                ($filters ++ ['+.internal.madrigal.ru', 'rnd.vpn.madrigal.ru', 'ams.server.lena727.ru']) | uniq
             )
         )
         _ => {

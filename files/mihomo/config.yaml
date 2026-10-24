@@ -66,6 +66,8 @@ dns:
   - speedtest.cros.wr.pvp.net
   - +.internal.madrigal.ru
   - rnd.vpn.madrigal.ru
+  # WireGuard retains its resolved endpoint across Mihomo restarts.
+  - ams.server.lena727.ru
   - +.lan
   - +.local
   ipv6: true

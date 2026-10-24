@@ -100,7 +100,7 @@
       peers = [
         {
           publicKey = "NjJfKekR5QmqlC8AYioRXvgBIeNlYGFElJjRql7WvT0=";
-          allowedIPs = [ "0.0.0.0/0" "::/0" ];
+          allowedIPs = [ "10.8.0.0/24" ];
           endpoint = "ams.server.lena727.ru:51820";
           persistentKeepalive = 0;
           presharedKeyFile = config.sops.secrets.lena727-wg-preshared-key.path;

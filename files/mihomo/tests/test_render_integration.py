@@ -183,6 +183,22 @@ class RenderIntegrationTests(unittest.TestCase):
         self.assertIn("candidate.yaml", result.stdout)
         return yaml.safe_load((self.state / "candidate.yaml").read_text())
 
+    def test_wireguard_endpoint_uses_real_ip_with_subscription_dns(self):
+        for mode in ("blacklist", "rule"):
+            with self.subTest(mode=mode):
+                subscription = json.loads(json.dumps(SUBSCRIPTION))
+                existing = "provider.example" if mode == "blacklist" else "DOMAIN,provider.example,real-ip"
+                subscription["dns"]["fake-ip-filter-mode"] = mode
+                subscription["dns"]["fake-ip-filter"] = [existing]
+                self.subscription.write_text(yaml.safe_dump(subscription))
+                filters = self.render()["dns"]["fake-ip-filter"]
+                expected = (
+                    "ams.server.lena727.ru" if mode == "blacklist"
+                    else "DOMAIN,ams.server.lena727.ru,real-ip"
+                )
+                self.assertIn(expected, filters)
+                self.assertIn(existing, filters)
+
     def systemctl(self, *, active: bool = False) -> tuple[Path, Path]:
         log = self.state / "systemctl.log"
         stub = self.state / "systemctl"
