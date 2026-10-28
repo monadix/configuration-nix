@@ -155,8 +155,7 @@
     serviceConfig = {
       Type = "oneshot";
       TimeoutStartSec = "45min";
-      LoadCredential = "office-bssids:${config.sops.secrets.mdr-office-bssids.path}";
-      ExecStart = "${pkgs.nushell}/bin/nu --no-config-file ${../files/mihomo/connect-vpn.nu} /run/mihomo/controller.sock %d/office-bssids";
+      ExecStart = "${pkgs.nushell}/bin/nu --no-config-file ${../files/mihomo/connect-vpn.nu} /run/mihomo/controller.sock";
       # Also restore the hostname when systemd interrupts a connection attempt.
       ExecStopPost = "-${config.networking.networkmanager.package}/bin/nmcli connection modify --temporary id mdr-l2tp +vpn.data gateway=rnd.vpn.madrigal.ru";
     };

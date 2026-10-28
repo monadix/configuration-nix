@@ -303,6 +303,7 @@ class RenderIntegrationTests(unittest.TestCase):
         self.assertNotIn("🇩🇪 DE RU", groups["FOREIGN-AUTO"]["proxies"])
         self.assertNotIn("🇫🇷 FR Unverified", groups["FOREIGN-AUTO"]["proxies"])
         self.assertEqual(groups["Quattro VPN"]["proxies"], ["FOREIGN-AUTO"])
+        self.assertEqual(groups["VPN-UPLINK"]["proxies"], ["REJECT"])
         self.assertEqual(groups["VPN-UPLINK"]["filter"], "^🇷🇺")
         self.assertTrue(groups["VPN-UPLINK"]["include-all-proxies"])
         self.assertIn("DOMAIN-SUFFIX,vpn.example,FOREIGN-AUTO", rendered["rules"])

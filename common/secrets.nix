@@ -28,8 +28,6 @@
         mode = "0440";
       };
 
-      mdr-office-bssids = { };
-
       lena727-wg-private-key = { };
       lena727-wg-preshared-key = { };
     };

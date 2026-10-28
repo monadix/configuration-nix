@@ -50,7 +50,11 @@ is never promoted.
 - An empty verified set renders `proxies: [REJECT]`. There is no
   `include-all-proxies` fallback and no hard-coded LTE exception.
 
-`VPN-UPLINK`, `Quattro VPN`, manual proxy selections, rules, and the backup
+`VPN-UPLINK` uses UDP-capable Russian proxies only; VPN reconnection tries
+non-LTE nodes before LTE nodes and never falls back to direct transport. Its
+`REJECT` member provides a fail-closed default when no proxy is selected.
+
+`Quattro VPN`, manual proxy selections, rules, and the backup
 `previous.yaml` behaviour are unchanged. A render writes a private
 `pending-application` marker before replacing `config.yaml` and removes it only
 after `try-restart mihomo.service` is accepted. An unchanged render retries an

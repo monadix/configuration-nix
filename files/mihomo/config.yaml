@@ -82,7 +82,7 @@ dns:
 proxy-groups:
 - name: VPN-UPLINK
   type: select
-  proxies: [DIRECT]
+  proxies: [REJECT]
   include-all-proxies: true
   filter: ^🇷🇺
 # Membership is rendered from verified exit locations; [REJECT] is the
