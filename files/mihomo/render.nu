@@ -27,13 +27,16 @@ def write_pending_application [path: path, temporary: path] {
     ^mv --force $temporary $path
 }
 
-def dispatch_application [systemctl: path, pending: path] {
-    let restarted = (do { ^$systemctl --no-block try-restart mihomo.service } | complete)
-    if $restarted.exit_code != 0 {
-        # Keep the marker so the next render retries the application request.
-        print --stderr $'Could not request mihomo restart: ($restarted.stderr | str trim)'
-    } else {
+def dispatch_application [socket: path, config: path, pending: path] {
+    try {
+        # The daemon's startup config is a systemd credential snapshot, and
+        # the installed file is outside Mihomo's safe-path directory.
+        http put --max-time 10sec --unix-socket $socket --content-type application/json 'http://localhost/configs?force=false' {payload: (open --raw $config)} | ignore
         rm --force $pending
+    } catch {
+        # Includes stopped/starting daemons: startup reads the installed file,
+        # and a later render retries without starting or restarting the service.
+        print --stderr 'Could not reload mihomo configuration; application remains pending.'
     }
 }
 
@@ -61,6 +64,7 @@ def main [
     let previous_path = ($state | path join 'previous.yaml')
     let pending_path = ($state | path join 'pending-application')
     let pending_temporary = ($state | path join '.pending-application.tmp')
+    let controller_socket = $local.external-controller-unix
 
     # Keep the subscription's DIRECT decisions unchanged.
     let rules = ($subscription_doc.rules? | default [] | each {|rule|
@@ -149,10 +153,10 @@ def main [
             rm --force $candidate_path
             rm --force $base_path
             # An earlier render may have installed the current bytes and been
-            # cancelled before its restart request. Retry that application;
+            # cancelled before its reload request. Retry that application;
             # otherwise this remains a true no-op.
             if ($pending_path | path exists) {
-                dispatch_application $systemctl $pending_path
+                dispatch_application $controller_socket $config_path $pending_path
             }
             return
         }
@@ -165,7 +169,7 @@ def main [
         if ($config_path | path exists) { cp --force $config_path $previous_path }
         ^mv --force $candidate_path $config_path
         rm --force $base_path
-        dispatch_application $systemctl $pending_path
+        dispatch_application $controller_socket $config_path $pending_path
     } catch {|err|
         rm --force $candidate_path
         rm --force $base_path

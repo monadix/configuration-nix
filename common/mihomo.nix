@@ -37,7 +37,7 @@ in
 
   systemd.services.mihomo = {
     # Starting mihomo must not start the recurring updater: its ExecStartPost
-    # schedules a location scan, and the scan's render can restart mihomo.
+    # schedules a location scan, which needs the running controller.
     requires = [ prepareUnit ];
     after = [ prepareUnit ];
     serviceConfig = {

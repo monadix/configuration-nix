@@ -11,10 +11,10 @@ so a cold boot still gets an initial configuration while a cached boot starts
 mihomo offline. Restarting mihomo therefore cannot fetch the subscription or
 schedule a location scan. The hourly updater timer, the deployment apply unit,
 and explicit updater starts are the only refresh triggers. An unchanged render
-leaves the running process untouched; only a changed configuration requests a
-`try-restart`. The prepare unit runs the updater only while mihomo waits for
-it, and changed rendering uses `try-restart`, so bootstrap cannot restart
-mihomo recursively.
+leaves the running process untouched; a changed configuration requests a
+non-forced reload through the private Unix controller socket. If the daemon is
+stopped or starting, the request remains pending and startup reads the latest
+file without a recursive service start.
 
 `mihomo-proxy-location-check.service` has no independent timer. Each
 subscription refresh schedules it after the refresh completes, so verification
@@ -57,10 +57,12 @@ non-LTE nodes before LTE nodes and never falls back to direct transport. Its
 `Quattro VPN`, manual proxy selections, rules, and the backup
 `previous.yaml` behaviour are unchanged. A render writes a private
 `pending-application` marker before replacing `config.yaml` and removes it only
-after `try-restart mihomo.service` is accepted. An unchanged render retries an
-outstanding application request, while a render with no marker and no byte
-change remains a no-op. The state directory is `0700`; the cache and marker are
-written `0600` and must stay root-only.
+after the controller accepts the reload. Failed or unavailable reloads never
+restart the service; an unchanged render retries an outstanding request, while
+one with no marker and no byte change remains a no-op. Unchanged listener
+settings avoid forced recreation, but retaining the process does not guarantee
+all connections survive a reload. The state directory is `0700`; the cache and
+marker are written `0600` and must stay root-only.
 
 ## Manual operations
 

@@ -179,7 +179,7 @@ else
   fi
   if [ ! -e "$CONFIG" ]; then
     printf "rendered configuration\\n" > "$CONFIG"
-    "$SYSTEMCTL" --user --no-block try-restart "$MAIN_UNIT" >/dev/null 2>&1 || true
+    # The renderer attempts only the private controller, never systemd.
   fi
 fi
 if [ "$changed" = 1 ]; then

@@ -4,6 +4,7 @@ import json
 import os
 import shutil
 import signal
+import socketserver
 import stat
 import subprocess
 import sys
@@ -11,7 +12,7 @@ import tempfile
 import threading
 import time
 import unittest
-from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+from http.server import BaseHTTPRequestHandler, SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 import yaml
@@ -155,9 +156,36 @@ class RenderIntegrationTests(unittest.TestCase):
             yaml.safe_dump(SUBSCRIPTION, allow_unicode=True, sort_keys=False)
         )
         self.settings = self.state / "settings.yaml"
+        settings = local_settings()
+        self.socket = self.state / "controller.sock"
+        settings["external-controller-unix"] = str(self.socket)
         self.settings.write_text(
-            yaml.safe_dump(local_settings(), allow_unicode=True, sort_keys=False)
+            yaml.safe_dump(settings, allow_unicode=True, sort_keys=False)
         )
+        self.requests = []
+        self.response = 204
+        self.block = None
+        test = self
+        class Handler(BaseHTTPRequestHandler):
+            def do_PUT(self):
+                body = json.loads(self.rfile.read(int(self.headers['Content-Length'])))
+                test.requests.append((self.path, body))
+                if test.block:
+                    test.block.wait(15)
+                try:
+                    self.send_response(test.response)
+                    self.end_headers()
+                except BrokenPipeError:
+                    pass  # The cancellation regression closes the client first.
+            def log_message(self, *args):
+                pass
+        class Server(socketserver.ThreadingMixIn, socketserver.UnixStreamServer):
+            daemon_threads = True
+        self.server = Server(str(self.socket), Handler)
+        self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
+        self.thread.start()
+        self.addCleanup(self.server.server_close)
+        self.addCleanup(self.server.shutdown)
         self.cache = self.state / "location-cache.json"
 
     def render(self) -> dict:
@@ -377,7 +405,8 @@ class RenderIntegrationTests(unittest.TestCase):
         rendered = yaml.safe_load((self.state / "config.yaml").read_text())
         groups = {group["name"]: group for group in rendered["proxy-groups"]}
         self.assertEqual(groups["RU-AUTO"]["proxies"], ["REJECT"])
-        self.assertIn("try-restart mihomo.service", systemctl_log.read_text())
+        self.assertEqual(self.requests, [('/configs?force=false', {'payload': (self.state / 'config.yaml').read_text()})])
+        self.assertNotIn('mihomo.service', systemctl_log.read_text())
 
     def test_unchanged_render_does_not_request_main_lifecycle(self):
         if FLOCK is None:
@@ -385,13 +414,27 @@ class RenderIntegrationTests(unittest.TestCase):
         self.populate_cache()
         systemctl, systemctl_log = self.systemctl()
         self.render_apply(systemctl)
-        self.assertIn("try-restart mihomo.service", systemctl_log.read_text())
-        systemctl_log.write_text("")
+        self.assertEqual(len(self.requests), 1)
+        self.requests.clear()
 
         self.render_apply(systemctl)
 
-        self.assertEqual(systemctl_log.read_text(), "")
+        self.assertEqual(self.requests, [])
+        self.assertFalse(systemctl_log.exists())
         self.assertFalse((self.state / "pending-application").exists())
+
+    def test_unavailable_controller_keeps_marker_without_starting_service(self):
+        systemctl, log = self.systemctl()
+        self.socket.unlink()
+        result = self.render_apply(systemctl)
+        self.assertIn('Could not reload mihomo configuration', result.stderr)
+        self.assertTrue((self.state / 'config.yaml').exists())
+        self.assertTrue((self.state / 'pending-application').exists())
+        self.assertFalse(log.exists())
+        result = self.render_apply(systemctl)
+        self.assertIn('Could not reload mihomo configuration', result.stderr)
+        self.assertTrue((self.state / 'pending-application').exists())
+        self.assertFalse(log.exists())
 
     def test_schedule_starts_idle_and_only_replaces_changed_active_scan(self):
         if NU is None:
@@ -492,7 +535,7 @@ class RenderIntegrationTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         log = systemctl_log.read_text().splitlines()
         self.assertIn("is-active mihomo-proxy-location-check.service", log)
-        self.assertIn("--no-block try-restart mihomo.service", log)
+        self.assertFalse(any('mihomo.service' in line for line in log))
         self.assertFalse(
             any(
                 "mihomo-proxy-location-check.service" in line
@@ -598,19 +641,8 @@ class RenderIntegrationTests(unittest.TestCase):
         if FLOCK is None:
             self.skipTest("flock is not available")
         self.populate_cache()
-        started = self.state / "dispatch-started"
-        release = self.state / "dispatch-release"
-        systemctl_log = self.state / "systemctl.log"
-        blocking = self.state / "systemctl"
-        blocking.write_text(
-            f"#!{sys.executable}\n"
-            "import pathlib, sys, time\n"
-            f"pathlib.Path({str(systemctl_log)!r}).open('a').write(' '.join(sys.argv[1:]) + '\\n')\n"
-            "if 'try-restart' in sys.argv:\n"
-            f"    pathlib.Path({str(started)!r}).write_text('')\n"
-            f"    while not pathlib.Path({str(release)!r}).exists(): time.sleep(0.02)\n"
-        )
-        blocking.chmod(0o755)
+        self.block = threading.Event()
+        blocking, _ = self.systemctl()
         process = subprocess.Popen(
             [
                 NU,
@@ -631,7 +663,10 @@ class RenderIntegrationTests(unittest.TestCase):
             start_new_session=True,
         )
         self.addCleanup(self.terminate_group, process)
-        self.wait_for_file(started, "renderer did not reach the restart request")
+        deadline = time.time() + 15
+        while not self.requests and time.time() < deadline:
+            time.sleep(0.02)
+        self.assertTrue(self.requests, 'renderer did not reach the reload request')
         pending = self.state / "pending-application"
         self.assertTrue((self.state / "config.yaml").exists())
         self.assertTrue(pending.exists())
@@ -639,15 +674,16 @@ class RenderIntegrationTests(unittest.TestCase):
         self.terminate_group(process)
         self.assertTrue(pending.exists())
 
-        success, recovery_log = self.systemctl()
+        self.block.set()
+        self.block = None
+        success, _ = self.systemctl()
         result = self.cached_render_apply(success)
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn("try-restart mihomo.service", recovery_log.read_text())
+        self.assertEqual(len(self.requests), 2)
         self.assertFalse(pending.exists())
 
-        recovery_log.write_text("")
         self.render_apply(success)
-        self.assertEqual(recovery_log.read_text(), "")
+        self.assertEqual(len(self.requests), 2)
 
     def test_interrupted_before_install_keeps_marker_and_recovers(self):
         if FLOCK is None:
@@ -715,38 +751,31 @@ class RenderIntegrationTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertTrue((self.state / "config.yaml").exists())
         self.assertFalse(pending.exists())
-        self.assertIn("try-restart mihomo.service", systemctl_log.read_text())
+        self.assertEqual(len(self.requests), 1)
+        self.assertFalse(systemctl_log.exists())
 
     def test_failed_application_request_retries_until_dispatched(self):
         if FLOCK is None:
             self.skipTest("flock is not available")
         self.populate_cache()
-        failing = self.state / "systemctl-fail"
-        failing.write_text(
-            f"#!{sys.executable}\n"
-            "import sys\n"
-            "if 'try-restart' in sys.argv:\n"
-            "    print('lifecycle unavailable', file=sys.stderr)\n"
-            "    sys.exit(1)\n"
-        )
-        failing.chmod(0o755)
+        failing, _ = self.systemctl()
+        self.response = 500
         failed = self.render_apply(failing, check=False)
         self.assertEqual(failed.returncode, 0, failed.stderr)
-        self.assertIn("Could not request mihomo restart", failed.stderr)
+        self.assertIn("Could not reload mihomo configuration", failed.stderr)
         pending = self.state / "pending-application"
         self.assertTrue((self.state / "config.yaml").exists())
         self.assertTrue(pending.exists())
         self.assertEqual(stat.S_IMODE(pending.stat().st_mode), 0o600)
 
-        success, success_log = self.systemctl()
-        result = self.render_apply(success)
+        self.response = 204
+        result = self.render_apply(failing)
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn("try-restart mihomo.service", success_log.read_text())
+        self.assertEqual(len(self.requests), 2)
         self.assertFalse(pending.exists())
 
-        success_log.write_text("")
-        self.render_apply(success)
-        self.assertEqual(success_log.read_text(), "")
+        self.render_apply(failing)
+        self.assertEqual(len(self.requests), 2)
 
     def test_unchanged_update_refetches_without_main_lifecycle(self):
         if FLOCK is None:
@@ -779,7 +808,7 @@ class RenderIntegrationTests(unittest.TestCase):
             systemctl, systemctl_log = self.systemctl()
             first = self.run_update(credential, systemctl)
             self.assertEqual(first.returncode, 0, first.stderr)
-            self.assertIn("try-restart mihomo.service", systemctl_log.read_text())
+            self.assertEqual(len(self.requests), 1)
             systemctl_log.write_text("")
             request_log.write_text("")
 
@@ -951,7 +980,8 @@ class RenderIntegrationTests(unittest.TestCase):
         groups = {group["name"]: group for group in rendered["proxy-groups"]}
         self.assertEqual(groups["RU-AUTO"]["proxies"], ["REJECT"])
         self.assertEqual(groups["FOREIGN-AUTO"]["proxies"], ["REJECT"])
-        self.assertIn("try-restart mihomo.service", systemctl_log.read_text())
+        self.assertEqual(len(self.requests), 2)
+        self.assertNotIn('try-restart mihomo.service', systemctl_log.read_text())
 
     def test_reset_without_subscription_uses_applied_config(self):
         if FLOCK is None:
@@ -1171,7 +1201,8 @@ class RenderIntegrationTests(unittest.TestCase):
         groups = {group["name"]: group for group in rendered["proxy-groups"]}
         self.assertEqual(groups["RU-AUTO"]["proxies"], ["REJECT"])
         self.assertEqual(groups["FOREIGN-AUTO"]["proxies"], ["REJECT"])
-        self.assertIn("try-restart mihomo.service", systemctl_log.read_text())
+        self.assertEqual(len(self.requests), 2)
+        self.assertNotIn('try-restart mihomo.service', systemctl_log.read_text())
 
     def test_update_invalid_fetched_subscription_is_not_promoted(self):
         if FLOCK is None:
