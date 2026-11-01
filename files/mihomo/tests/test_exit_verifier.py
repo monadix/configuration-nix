@@ -462,6 +462,27 @@ class TtlAndClassificationTests(unittest.TestCase):
             self.assertEqual(report["counts"]["unverified"], 1)
             self.assertEqual(report["counts"]["ignored"], 3)
 
+    def test_belarus_labels_and_exits_are_excluded(self):
+        cases = [
+            ("🇧🇾 Беларусь #2", ("BY",)),
+            ("🇧🇾 Belarus foreign exit", ("DE",)),
+            ("🇩🇪 Belarus exit", ("BY",)),
+            ("🇩🇪 Mixed exits", ("DE", "BY")),
+        ]
+        for name, countries in cases:
+            with self.subTest(name=name), tempfile.TemporaryDirectory() as tmp:
+                config_path = Path(tmp) / "config.yaml"
+                cache_path = Path(tmp) / "cache.json"
+                node = proxy(name)
+                write_config(config_path, [node])
+                write_cache(cache_path, 1, {
+                    ev.canonical_node_key(node): entry("non_ru", countries=countries),
+                })
+                report = ev.classify(str(config_path), str(cache_path), clock=lambda: 1_000.0)
+                self.assertEqual(report["groups"]["FOREIGN-AUTO"], [])
+                self.assertEqual(report["nodes"][0]["classification"], "excluded")
+                self.assertEqual(report["nodes"][0]["reason"], "belarus_label_or_exit")
+
     def test_expired_entry_revokes_eligibility(self):
         with tempfile.TemporaryDirectory() as tmp:
             config_path = Path(tmp) / "config.yaml"

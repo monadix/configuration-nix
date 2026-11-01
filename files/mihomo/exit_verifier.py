@@ -1180,6 +1180,8 @@ def _derive_classification(
     if verdict == "non_ru":
         if candidate.original_country == "RU":
             return "excluded", None, "ru_labelled_non_ru_exit", False
+        if candidate.original_country == "BY" or "BY" in entry["exit_countries"]:
+            return "excluded", None, "belarus_label_or_exit", False
         return "foreign", "FOREIGN-AUTO", "both_endpoints_non_ru", False
     return "unverified", None, entry["reason"], False
 

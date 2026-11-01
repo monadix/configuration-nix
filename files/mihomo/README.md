@@ -45,7 +45,8 @@ is never promoted.
 `RU-AUTO` and `FOREIGN-AUTO` contain explicit verified members only:
 
 - `RU-AUTO`: RU-labelled nodes whose two independent probes both report RU.
-- `FOREIGN-AUTO`: non-RU-labelled nodes whose probes both report non-RU.
+- `FOREIGN-AUTO`: non-RU/non-BY-labelled nodes whose probes both report non-RU
+  and neither reports BY (Belarus).
 - Mislabelled or expired nodes are excluded.
 - An empty verified set renders `proxies: [REJECT]`. There is no
   `include-all-proxies` fallback and no hard-coded LTE exception.

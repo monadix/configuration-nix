@@ -129,3 +129,4 @@ rules:
 - DOMAIN-SUFFIX,kontur.host,RU-AUTO
 - DOMAIN-SUFFIX,ktalk.ru,RU-AUTO
 - DOMAIN-SUFFIX,donstu.ru,RU-AUTO
+- DOMAIN-SUFFIX,xn--h1aax.xn--p1ai,RU-AUTO
