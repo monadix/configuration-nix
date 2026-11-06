@@ -20,37 +20,28 @@ def main [socket: path] {
     let proxies = http get --max-time 5sec --unix-socket $socket $'($api)/proxies' | get proxies
     let eligible = $proxies.VPN-UPLINK.all | where {|name| $name not-in ['DIRECT', 'REJECT'] and ($proxies | get $name | get udp) }
     let candidates = ($eligible | where $it !~ '(?i)LTE') ++ ($eligible | where $it =~ '(?i)LTE')
-    let dns = http get --max-time 15sec --unix-socket $socket $'($api)/dns/query?name=rnd.vpn.madrigal.ru&type=A'
-    let gateways = $dns.Answer | where type == 1 | get data
     let connected = try {
         mut success = false
         disconnect
         for candidate in $candidates {
             http put --max-time 5sec --unix-socket $socket --content-type application/json $'($api)/proxies/VPN-UPLINK' {name: $candidate} | ignore
-            for gateway in $gateways {
-                # Discard only this transport's UDP associations between attempts.
-                let sessions = http get --max-time 5sec --unix-socket $socket $'($api)/connections' | get connections
-                for session in ($sessions | where {|s| 'VPN-UPLINK' in $s.chains }) {
-                    http delete --max-time 5sec --unix-socket $socket $'($api)/connections/($session.id)' | ignore
-                }
-                let change = do { ^nmcli connection modify --temporary id mdr-l2tp +vpn.data $'gateway=($gateway)' } | complete
-                if $change.exit_code != 0 { error make {msg: 'Cannot set VPN gateway'} }
-                print $'Trying work VPN using ($candidate) to ($gateway).'
-                let attempt = do { ^nmcli --wait 35 connection up id mdr-l2tp } | complete
-                if $attempt.exit_code == 0 {
-                    print $'Work VPN connected using ($candidate).'
-                    $success = true
-                    break
-                }
-                print --stderr $'VPN attempt to ($gateway) failed with nmcli exit code ($attempt.exit_code).'
-                disconnect
+            # Discard only this transport's UDP associations between attempts.
+            let sessions = http get --max-time 5sec --unix-socket $socket $'($api)/connections' | get connections
+            for session in ($sessions | where {|s| 'VPN-UPLINK' in $s.chains }) {
+                http delete --max-time 5sec --unix-socket $socket $'($api)/connections/($session.id)' | ignore
             }
-            if $success { break }
+            print $'Trying work VPN using ($candidate).'
+            let attempt = do { ^nmcli --wait 35 connection up id mdr-l2tp } | complete
+            if $attempt.exit_code == 0 {
+                print $'Work VPN connected using ($candidate).'
+                $success = true
+                break
+            }
+            print --stderr $'VPN attempt using ($candidate) failed with nmcli exit code ($attempt.exit_code).'
+            disconnect
         }
         $success
     } catch {|err| print --stderr $err.msg; false }
-    # Restore declarative hostname; an active VPN retains its negotiated gateway.
-    ^nmcli connection modify --temporary id mdr-l2tp +vpn.data 'gateway=rnd.vpn.madrigal.ru'
     if not $connected {
         disconnect
         http put --max-time 5sec --unix-socket $socket --content-type application/json $'($api)/proxies/VPN-UPLINK' {name: REJECT} | ignore

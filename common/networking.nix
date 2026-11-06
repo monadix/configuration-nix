@@ -53,7 +53,8 @@
 
           vpn = {
             service-type = "org.freedesktop.NetworkManager.l2tp";
-            gateway = "rnd.vpn.madrigal.ru";
+            # Pinned: resolving the hostname fails on some uplinks.
+            gateway = "213.138.72.10";
             user = "$MDR_L2TP_USER";
 
             ipsec-enabled = "yes";
@@ -156,8 +157,6 @@
       Type = "oneshot";
       TimeoutStartSec = "45min";
       ExecStart = "${pkgs.nushell}/bin/nu --no-config-file ${../files/mihomo/connect-vpn.nu} /run/mihomo/controller.sock";
-      # Also restore the hostname when systemd interrupts a connection attempt.
-      ExecStopPost = "-${config.networking.networkmanager.package}/bin/nmcli connection modify --temporary id mdr-l2tp +vpn.data gateway=rnd.vpn.madrigal.ru";
     };
   };
 
