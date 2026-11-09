@@ -93,16 +93,34 @@
     };
 
     wg-quick.interfaces.lena727 = {
+      type = "amneziawg";
       autostart = false;
-      address = [ "10.8.0.17/24" ];
-      dns = [ "8.8.8.8" ];
+      address = [ "10.8.0.6/32" ];
+      dns = [
+        "1.1.1.1"
+        "8.8.8.8"
+      ];
+      mtu = 1420;
       privateKeyFile = config.sops.secrets.lena727-wg-private-key.path;
+
+      # Obfuscation parameters assigned by the provider.
+      extraOptions = {
+        Jc = 9;
+        Jmin = 50;
+        Jmax = 1000;
+        S1 = 109;
+        S2 = 50;
+        H1 = 2050402050;
+        H2 = 1904552275;
+        H3 = 545908566;
+        H4 = 1281033274;
+      };
 
       peers = [
         {
-          publicKey = "NjJfKekR5QmqlC8AYioRXvgBIeNlYGFElJjRql7WvT0=";
+          publicKey = "baAXZpOjnqp+B+pj2XVxW4GQppmJHeOliZk0TI5xkkI=";
           allowedIPs = [ "10.8.0.0/24" ];
-          endpoint = "ams.server.lena727.ru:51820";
+          endpoint = "ams.server.lena727.ru:59412";
           persistentKeepalive = 0;
           presharedKeyFile = config.sops.secrets.lena727-wg-preshared-key.path;
         }
