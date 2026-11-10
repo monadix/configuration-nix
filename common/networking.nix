@@ -94,12 +94,8 @@
 
     wg-quick.interfaces.lena727 = {
       type = "amneziawg";
-      autostart = false;
+      autostart = true;
       address = [ "10.8.0.6/32" ];
-      dns = [
-        "1.1.1.1"
-        "8.8.8.8"
-      ];
       mtu = 1420;
       privateKeyFile = config.sops.secrets.lena727-wg-private-key.path;
 
