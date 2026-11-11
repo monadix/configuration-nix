@@ -9,6 +9,7 @@
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
 
   boot = {
+    tmp.cleanOnBoot = true;
     initrd.availableKernelModules = [ "xhci_pci" "nvme" "usb_storage" "usbhid" "sd_mod" ];
     kernelModules = [ "kvm-intel" ];
 
