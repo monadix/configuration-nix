@@ -18,7 +18,6 @@
     flutter
     gcc
     ghc
-    glances
     go
     haskell-language-server
     home-manager
