@@ -94,11 +94,11 @@
         "webkit-dev": "webkit-dev"
       },
       "locked": {
-        "lastModified": 1794948360,
-        "narHash": "sha256-sEvZtZOKgmsLLBLwg9lrrRxQ+JkP7NjNFFRp9BJ8PCE=",
+        "lastModified": 1795101162,
+        "narHash": "sha256-/OP/0zBKIgNgMoI4dWQuR5AOrS5lCLmvQkBKs8uNGC4=",
         "owner": "monadix",
         "repo": "home-manager-config",
-        "rev": "8240b1de99fa44518a64ed1cbf220919a630df33",
+        "rev": "a97577c0db94ca6618bf7c32e6c61164677c1b06",
         "type": "github"
       },
       "original": {
@@ -290,17 +290,17 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1792562866,
-        "narHash": "sha256-kncgeFfgISPDJtXgcqjZEaFdPmyhj6PTcYdN5MzZ43k=",
+        "lastModified": 1795088826,
+        "narHash": "sha256-+p8q3q6rM76oY6dxaGly3cJy0lIoYJLORyKIUdzpydA=",
         "owner": "monadix",
         "repo": "webkitgtk-4.1-libwebrtc-nix",
-        "rev": "9e505662b26f8de3e5362f380620cb8909782dcd",
+        "rev": "f61b81307dd4bc553e202fbbf57aa1ce8323a592",
         "type": "github"
       },
       "original": {
         "owner": "monadix",
         "repo": "webkitgtk-4.1-libwebrtc-nix",
-        "rev": "9e505662b26f8de3e5362f380620cb8909782dcd",
+        "rev": "f61b81307dd4bc553e202fbbf57aa1ce8323a592",
         "type": "github"
       }
     }
