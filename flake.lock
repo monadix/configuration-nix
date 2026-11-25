@@ -94,11 +94,11 @@
         "webkit-dev": "webkit-dev"
       },
       "locked": {
-        "lastModified": 1795585548,
-        "narHash": "sha256-El50zmL8jHXg3DsOMMIESWsnu6w9TtrcGJRNcmzeo8s=",
+        "lastModified": 1795586530,
+        "narHash": "sha256-0tQRwH5RA6xOrnDFaOgphzn8QwsFwYRq8E6d509yiBc=",
         "owner": "monadix",
         "repo": "home-manager-config",
-        "rev": "c022698525116a570c20a875fb8a6f15ac713a30",
+        "rev": "ed096ad4829035a02336b2fe187ce93ed51fe989",
         "type": "github"
       },
       "original": {
