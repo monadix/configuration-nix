@@ -29,7 +29,6 @@
     parted
     pciutils
     podman-tui
-    rustup
     screentest
     stack
     steam-run
